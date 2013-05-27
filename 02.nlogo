@@ -135,13 +135,13 @@ to load-data
 ; the file paths !!!
 ;________________________________________________________________________________
 
-  set rivers-shape gis:load-dataset "/home/chris/data/ba/rivers.shp"
-  set irrigation-area gis:load-dataset "/home/chris/data/ba/irrigation.shp"
-  set irrigation-centroids gis:load-dataset "/home/chris/data/ba/irrigation-centroids.shp"
-  set cities gis:load-dataset "/home/chris/data/ba/cities.shp"
-  set popcores gis:load-dataset "/home/chris/data/ba/popcore.shp"
-  set catchments-area gis:load-dataset "/home/chris/data/ba/catchments.shp"
-  set canals gis:load-dataset "/home/chris/data/ba/canals.shp"
+  set rivers-shape gis:load-dataset "data/rivers.shp"
+  set irrigation-area gis:load-dataset "data/irrigation.shp"
+  set irrigation-centroids gis:load-dataset "data/irrigation-centroids.shp"
+  set cities gis:load-dataset "data/cities.shp"
+  set popcores gis:load-dataset "data/popcore.shp"
+  set catchments-area gis:load-dataset "data/catchments.shp"
+  set canals gis:load-dataset "data/canals.shp"
 end
 
 
