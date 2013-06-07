@@ -50,7 +50,6 @@ globals[
   price
   price-list
   price-factors
-  crop-demand-list
   counter
   ]
 
@@ -73,9 +72,8 @@ breed[rivers river]
 
 
 irrigations-own[
-  centroids 
+  centroids
   area
-  crop-demand
   productivity
   demand
   id
@@ -133,13 +131,13 @@ to setup
   load-data
   draw-landscape
   calculate-metric-patch-size
-  initialize
   setup-households
   setup-water-utilities
   setup-catchments
   setup-irrigations
   rescale
   reset-ticks
+  initialize
 end
 
 
@@ -167,7 +165,7 @@ end
 
 to draw-landscape
 ;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
-; Since the GIS-shapes are not 1:1 patches, there are some transformations 
+; Since the GIS-shapes are not 1:1 patches, there are some transformations
 ; necessary.
 ; resize-world in combination with patch-size influences resolution of the model
 ; as well as computational needs! Scale down when necessary.
@@ -216,14 +214,8 @@ to setup-irrigations
     let contained patches gis:intersecting gis:find-one-feature irrigation-area "registro" word registro ""
     ask contained[
       set irrigation-id gis:property-value ? "registro"
-      set pcolor round (62 +  irrigation-id / 4500)
+      set pcolor round irrigation-id / round 100
     ]
-  ]
-  ask irrigations[
-    let cropr random-float 1
-    ifelse (cropr > 0.5)[
-      set crop-demand item 0 crop-demand-list][
-      set crop-demand item 1 crop-demand-list]
   ]
 end
 
@@ -265,7 +257,7 @@ to setup-households
       set D3 1
       set population population / 3
       set hh-size 3]
-    if (hogares >= 70.88) and (hogares < 100)[
+    if (hogares >= 70.88) and (hogares <= 100)[
       set D4 1
       set population population / 4
       set hh-size 4]
@@ -307,7 +299,7 @@ to setup-catchments
     let contained patches gis:intersecting gis:find-one-feature catchments-area "cueche_" word cueche-id ""
     ask contained[
       set catchment-id gis:property-value ? "cueche_"
-      set pcolor round catchment-id + 35
+      set pcolor round catchment-id + 5
     ]
   ]
 end
@@ -326,7 +318,7 @@ to initialize
 ; Especially rain-list is important, where the yearly rainfall pattern is put in.
 ; It is modeled as days per month with rainfall and taken from national weather
 ; data.
-; 
+;
 ; Rain, precipitation and temperature are taken from:
 ; http://worldweather.wmo.int/083/c01240.htm ( 19.05.2013 )
 ; Ebro discharge data is taken from:
@@ -336,19 +328,14 @@ to initialize
 
   set week 0
   set year 0
-  set rain-list [7 7 7 7 6 6 6 6 6 6 6 6 7 8 8 8 8 9 9 9 9 7 6 6 6 6 4 4 4 4 4 4 4 4 5 5 5 5 6 7 7 7 7 8 8 8 8 9 9 9 9 8] ; days / month with more than 0.1 mm / m² precipitation
-  set precipitation-list [22 22 22 22 20 20 20 20 20 20 20 20 27 35 35 35 35 44 44 44 44 37 31 31 31 31 18 18 18 18 17 17 17 17 32 27 27 27 27 30 30 30 30 30 30 30 30 25 23 23 23 23] ; mm / m²
-  set temperature-list [6.35 6.35 6.35 6.35 8.4 8.4 8.4 8.4 10.9 10.9 10.9 10.9 10.9 13.1 13.1 13.1 13.1 13.1 17.2 17.2 17.2 17.2 17.2 21.25 21.25 21.25 21.25 24.6 24.6 24.6 24.6 24.4 
-    24.4 24.4 20.7 20.7 20.7 20.7 20.7 15.5 15.5 15.5 15.5 10.1 10.1 10.1 10.1 7. 7. 7. 7. 7.] ; °C
-  set ebro-discharge-list [578067840 578067840 578067840 578067840 565306560 565306560 565306560 565306560 618770880 618770880 618770880 618770880 496540800 496540800 496540800 
-    496540800 431161920 431161920 431161920 431161920 362124000 293086080 293086080 293086080 293086080 224350560 155615040 155615040 155615040 155615040 106142400 106142400 
-    106142400 106142400 110799360 110799360 110799360 110799360 156159360 201519360 201519360 201519360 201519360 357920640 357920640 357920640 357920640 456563520 555206400 555206400 555206400 555206400] ; m³ / week
+  set rain-list [7 7 7 7 6 6 6 6 6 6 6 6 7 8 8 8 8 9 9 9 9 7 6 6 6 6 4 4 4 4 4 4 4 4 5 5 5 5 6 7 7 7 7 8 8 8 8 9 9 9 9 8]
+  set precipitation-list [22 22 22 22 20 20 20 20 20 20 20 20 27 35 35 35 35 44 44 44 44 37 31 31 31 31 18 18 18 18 17 17 17 17 32 27 27 27 27 30 30 30 30 30 30 30 30 25 23 23 23 23]
+  set temperature-list [6.35 6.35 6.35 6.35 8.4 8.4 8.4 8.4 10.9 10.9 10.9 10.9 10.9 13.1 13.1 13.1 13.1 13.1 17.2 17.2 17.2 17.2 17.2 21.25 21.25 21.25 21.25 24.6 24.6 24.6 24.6 24.4 24.4 24.4 20.7 20.7 20.7 20.7 20.7 15.5 15.5 15.5 15.5 10.1 10.1 10.1 10.1 7. 7. 7. 7. 7.]
+  set ebro-discharge-list [578067840 578067840 578067840 578067840 565306560 565306560 565306560 565306560 618770880 618770880 618770880 618770880 496540800 496540800 496540800 496540800 431161920 431161920 431161920 431161920 362124000 293086080 293086080 293086080 293086080 224350560 155615040 155615040 155615040 155615040 106142400 106142400 106142400 106142400 110799360 110799360 110799360 110799360 156159360 201519360 201519360 201519360 201519360 357920640 357920640 357920640 357920640 456563520 555206400 555206400 555206400 555206400] ; m³ / week
   set price 1
-  set price-list [0.21 0.503 1.28] ; € / m³
-  ;                   β0      δ1      δ2      δ3      δ4      δ5      δ6     δ7     β1           β2     β3      β4
+  set price-list [0.21 0.503 1.28]
+; β0 δ1 δ2 δ3 δ4 δ5 δ6 δ7 β1 β2 β3 β4
   set price-factors [-0.7026 -0.2645 -1.0525 -0.9509 -0.1983 -0.0078 -0.0409 0.3228 0.000002941 -0.1087 0.0684 -0.0692]
-  ;water demand: m³/m² alfalfa corn
-  set crop-demand-list [0.0511 0.0385]
 end
 
 
@@ -356,7 +343,7 @@ end
 
 ;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
 ;
-;      HERE THE SETUP-PROCEDURES END, AND THE BEHAVIOUR-MODELLING BEGINS.
+; HERE THE SETUP-PROCEDURES END, AND THE BEHAVIOUR-MODELLING BEGINS.
 ;
 ;________________________________________________________________________________
 
@@ -381,6 +368,13 @@ to time
 end
 
 
+to rescale
+  ask irrigations[
+    set size demand / 100000
+  ]
+end
+
+
 
 
 to weather
@@ -389,21 +383,21 @@ to weather
 ; precipitation. It reflects yearly rainfall patterns with certain random factor.
 ; It can be refined to reflect natural rainfall patterns.
 ;________________________________________________________________________________
-  rain-probability-function
-  ifelse (random-float 1 < (rain-probability / 30))[
-    ask patches[
+
+  ask patches[
+    rain-probability-function
+    ifelse (random-float 1 < rain-probability / 30)[
       set rain? 1
       set pcolor 9.9
       set water item week precipitation-list / item week rain-list ; precipitation in mm
       set water metric-patch-size * metric-patch-size * water ; quantity of water in liters/patch
       set water water / 1000 ; quantity of water / patch in m³, equivalent to 1.000 liters
-      ]][
-      ask patches[
+      ][
       set rain? 0
       set water 0
-      set pcolor 35
-      ]
-      ]
+      set pcolor 35]
+  ]
+
   let t1 item week temperature-list
   let t2 item week temperature-list / 4
   set temperature random-normal t1 t2
@@ -420,26 +414,61 @@ to rain-probability-function
 end
 
 
+
+to irrigate
+;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+; This function sets the irrigation necessity: If rain falls, irrigation is not
+; necessary, if it does not fall on a certain patch which is designated for
+; irrigation, it sets the patches flag to "Irrigation is necessary".
+; It is modelled after the irrigation period.
+;________________________________________________________________________________
+
+  ifelse (week >= 12) and (week <= 40)[
+    ask irrigated [
+      ifelse (rain? = 1)[
+        set irrigation-demand? 0
+        set pcolor 9.9][
+        set irrigation-demand? 1
+        set water water - 1
+        set pcolor 25]
+        ]
+    ][
+    ask irrigated[
+      set irrigation-demand? 0
+      ifelse (rain? = 1)[
+        set pcolor 9.9][
+        set pcolor 35]
+    ]
+    ]
+end
+
+
+
+to aggregate
+  set ebro-discharge item week ebro-discharge-list + item week ebro-discharge-list * ((random-float 0.5) - 0.25)
+  set urban-demand sum [demand-agg] of households
+  set price sum [costs] of households / sum [demand] of households ; this function is not a scientific model! just for demonstration purposes
+end
+
+
+
+
 to household-demand-function
 ;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
 ; This function calculates the urban water demand. In the simple model, demand
 ; is equal for all household-agents (which represent a fraction of the cities
 ; population).
-; In this more improved version, the demand is calculated per household and 
+; In this more improved version, the demand is calculated per household and
 ; later aggregated in the aggregate-procedure.
 ;
 ; Demand function according to Arbues et al. 2010.
 ; qit = e ^ ( β0 + δ1 * deit-2 + δ2 * D1 * deit-2 + δ3 * D2 * deit-2 + δ4 * D3 * deit-2 + δ5 * D4 * deit-2 + δ6 * HD + δ7 ln deit-4 + β1 * W + β2 * CHW + β3 * AG20 + β4 * AG60 * u)
 ;
-; It involves four cost periods (four meter readings per year).
 ; This function then calculates the costs for households.
 ; In a more advanced version, price discrimination can be introduced.
-; Data taken from 
+; Data taken from
 ; http://www.zaragoza.es/contenidos/normativa/ordenanzas-fiscales/2013/OF_24-25-2013.pdf
 ; ( 21.05.2013)
-;
-; final dimensions: demand m³ / week
-;
 ;________________________________________________________________________________
 
   ask households[
@@ -447,8 +476,7 @@ to household-demand-function
   let deit-4 item 3 cost-history
   if (deit-2 < 1)[set deit-2 (item 0 cost-history + item 2 cost-history) / 2 ]
   if (deit-4 < 1)[set deit-4 2]
-  set demand (e ^ (item 0 price-factors + item 1 price-factors * deit-2 + item 2 price-factors * D1 * deit-2 + item 3 price-factors * D2 * deit-2 + item 4 price-factors * D3 * deit-2 + item 5 price-factors * D4 * deit-2 +
-     item 6 price-factors * HD + item 7 price-factors * ln deit-4 + item 8 price-factors * W + item 9 price-factors * CHW + item 10 price-factors * AG20 + item 11 price-factors * AG60 + (random-float 1) - 0.5)); + price * 0.0005
+  set demand e ^ (item 0 price-factors + item 1 price-factors * deit-2 + item 2 price-factors * D1 * deit-2 + item 3 price-factors * D2 * deit-2 + item 4 price-factors * D3 * deit-2 + item 5 price-factors * D4 * deit-2 + item 6 price-factors * HD + item 7 price-factors * ln deit-4 + item 8 price-factors * W + item 9 price-factors * CHW + item 10 price-factors * AG20 + item 11 price-factors * AG60 + (random-float 1) - 0.5)
   set demand demand * 7
   set demand-pc demand / hh-size
   set demand-acc demand-acc + demand
@@ -471,29 +499,9 @@ to household-demand-function
 end
 
 
-
-
-to irrigate
-;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
-; This function sets the irrigation necessity according to season.
-; The summer crops are planted from May to September in Salvador et al.
-;________________________________________________________________________________
-
-  ifelse (week > 12) and (week <= 40)[
-    ask irrigated[
-      set irrigation-demand? 1
-      set pcolor round (62 +  irrigation-id / 4500]][
-    ask irrigated[
-      set irrigation-demand? 0
-      set pcolor 35]]
-end
-
-
-
-
 to agro-demand-function
 ;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
-; This function calculates the water demand for agriculture, starting with a 
+; This function calculates the water demand for agriculture, starting with a
 ; simple demand = 1 for each unwatered patch.
 ; Right now: Some random value to represent demand per m².
 ; In the final version it should calculate water demand based on a maximizing
@@ -502,47 +510,36 @@ to agro-demand-function
 
   foreach sort-on [irrigation-id] irrigated[
     ask ? [
-      ifelse (irrigation-demand? = 1)[
+      if (rain? = 0) and (irrigation-demand? = 1)[
         let tempid [irrigation-id] of self
         ask irrigations with [irrigation-id = tempid][
-          set demand area * crop-demand / 100
+          set demand demand + metric-patch-size * metric-patch-size / 1000
         ]
-      ][
+      ]
+      if (rain? = 1) and (irrigation-demand? = 1)[
         let tempid [irrigation-id] of self
         ask irrigations with [irrigation-id = tempid][
-          set demand 0]
+          set demand demand + metric-patch-size * metric-patch-size / 1000 * (item week precipitation-list / item week rain-list - 10)
+        ]
+      ]
+      if (rain? = 1) and (irrigation-demand? = 0)[
+        let tempid [irrigation-id] of self
+        ask irrigations with [irrigation-id = tempid][
+          set demand 0
+        ]
       ]
     ]
   ]
 end
-
-
-
-
-to aggregate
-  set ebro-discharge item week ebro-discharge-list + item week ebro-discharge-list * ((random-float 0.5) - 0.25)
-  set urban-demand sum [demand-agg] of households
-  set price sum [costs] of households / sum [demand] of households ; this function is not a scientific model! just for demonstration purposes
-end
-
-
-
-
-to rescale
-  ask irrigations[
-    set size demand / 100000
-  ]
-end
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 -4
 287
-728
-680
-180
-90
-2.0
+729
+681
+120
+60
+3.0
 1
 10
 1
@@ -552,10 +549,10 @@ GRAPHICS-WINDOW
 0
 0
 1
--180
-180
--90
-90
+-120
+120
+-60
+60
 0
 0
 1
@@ -580,10 +577,10 @@ NIL
 1
 
 BUTTON
-12
-51
-83
-84
+118
+55
+189
+88
 NIL
 go
 T
@@ -597,10 +594,10 @@ NIL
 1
 
 PLOT
-729
-97
-1236
-249
+738
+11
+1280
+163
 demand
 week
 quantity
@@ -617,10 +614,10 @@ PENS
 "overall demand" 1.0 0 -10899396 true "" "plot urban-demand + sum [demand] of irrigations"
 
 MONITOR
-224
-772
-281
-817
+226
+82
+283
+127
 NIL
 week
 17
@@ -628,10 +625,10 @@ week
 11
 
 MONITOR
-280
-772
-337
-817
+282
+82
+339
+127
 NIL
 year
 17
@@ -661,10 +658,10 @@ sum [water] of patches
 11
 
 MONITOR
-375
-689
-432
-734
+353
+12
+410
+57
 NIL
 price
 17
@@ -672,10 +669,10 @@ price
 11
 
 PLOT
-728
-554
-1123
-674
+771
+463
+1166
+583
 price
 NIL
 NIL
@@ -698,7 +695,7 @@ ps
 ps
 1
 5
-2
+3
 1
 1
 NIL
@@ -720,10 +717,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-820
-693
-960
-738
+226
+146
+366
+191
 patch length [m]
 metric-patch-size
 17
@@ -731,57 +728,21 @@ metric-patch-size
 11
 
 MONITOR
-820
-740
-941
-785
+226
+193
+347
+238
 patch area [km²]
 metric-patch-size * metric-patch-size / 1000000
 17
 1
 11
 
-PLOT
-1122
-255
-1322
-405
-distribution of household-sizes
-NIL
-NIL
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 1 -16777216 true "" "histogram [hh-size] of households"
-
-PLOT
-1122
-436
-1322
-586
-distribution of wealth
-NIL
-NIL
-0.0
-75000.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 2000.0 1 -16777216 true "" "histogram [W] of households"
-
 MONITOR
-561
-693
-642
-738
+539
+16
+620
+61
 population
 sum [population] of households
 17
@@ -789,10 +750,10 @@ sum [population] of households
 11
 
 MONITOR
-441
-691
-550
-736
+419
+14
+528
+59
 urban demand
 sum [demand] of households
 17
@@ -800,10 +761,10 @@ sum [demand] of households
 11
 
 PLOT
-728
-401
-1121
-558
+349
+681
+742
+838
 Temperature
 NIL
 NIL
@@ -818,29 +779,11 @@ PENS
 "temperature" 1.0 0 -16777216 true "" "plot temperature"
 "hot day?" 1.0 1 -7500403 true "" "plot HD"
 
-PLOT
-1343
-254
-1543
-404
-plot 1
-NIL
-NIL
-0.0
-1000.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 10.0 1 -16777216 true "" "histogram [population] of households"
-
 MONITOR
-547
-758
-749
-803
+505
+93
+707
+138
 demand per household / day
 sum [demand] of households / count households / 7
 17
@@ -848,10 +791,10 @@ sum [demand] of households / count households / 7
 11
 
 MONITOR
-376
-760
-534
-805
+502
+148
+660
+193
 costs
 sum [item 1 cost-history] of households / 1000
 17
@@ -859,10 +802,10 @@ sum [item 1 cost-history] of households / 1000
 11
 
 MONITOR
-652
-700
-747
-745
+630
+23
+725
+68
 demand p.c.
 sum [demand-pc] of households / sum [hh-size] of households / 7
 17
@@ -881,10 +824,10 @@ temperature
 11
 
 PLOT
-729
-247
-1121
-401
+760
+160
+1164
+314
 demand p.c.
 NIL
 NIL
@@ -897,6 +840,164 @@ false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "plot (sum [demand-pc] of households / sum [hh-size] of households / 7) * 1000"
+
+PLOT
+1176
+577
+1460
+762
+household demand
+NIL
+NIL
+0.0
+100.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 1 -16777216 true "" "histogram [demand] of households"
+
+MONITOR
+1284
+12
+1569
+57
+NIL
+mean [item 0 cost-history] of households
+17
+1
+11
+
+MONITOR
+1285
+63
+1570
+108
+NIL
+mean [item 1 cost-history] of households
+17
+1
+11
+
+MONITOR
+1285
+112
+1570
+157
+NIL
+mean [item 2 cost-history] of households
+17
+1
+11
+
+MONITOR
+1282
+161
+1567
+206
+NIL
+mean [item 3 cost-history] of households
+17
+1
+11
+
+MONITOR
+1581
+14
+1822
+59
+NIL
+mean [demand-acc] of households
+17
+1
+11
+
+MONITOR
+1581
+67
+1778
+112
+NIL
+mean [costs] of households
+17
+1
+11
+
+PLOT
+1171
+212
+1458
+403
+costs
+NIL
+NIL
+0.0
+100.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 1 -16777216 true "" "histogram [costs] of households with [demand < 1]"
+
+BUTTON
+16
+55
+106
+88
+go once
+go
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+PLOT
+1174
+404
+1458
+575
+cost-history
+NIL
+NIL
+0.0
+100.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 1 -16777216 true "" "histogram [item 0 cost-history] of households with [demand < 1]"
+"pen-1" 1.0 1 -7500403 true "" "histogram [item 1 cost-history] of households with [demand < 1]"
+"pen-2" 1.0 1 -2674135 true "" "histogram [item 2 cost-history] of households with [demand < 1]"
+"pen-3" 1.0 1 -955883 true "" "histogram [item 3 cost-history] of households with [demand < 1]"
+
+PLOT
+771
+312
+1163
+462
+demand per household
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot sum [demand] of households / 1000"
 
 @#$#@#$#@
 ## WHAT IS IT?
