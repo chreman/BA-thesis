@@ -24,33 +24,41 @@ extensions[gis]
 ;________________________________________________________________________________
 
 globals[
+  ; for landscaping
   ebro-basin
   rivers-shape
-  ebro-discharge-list
-  ebro-discharge
   catchments-area
   catchments-centroids
   irrigation-area
   irrigation-centroids
-  metric-patch-size
   canals
   cities
   popcores
+  ; for environmental simulation
   week
   year
+  metric-patch-size
   rain-list
   precipitation-list
   rain-probability
   temperature-list
   temperature
+  ebro-discharge-list
+  ebro-discharge
+  ; for agent behaviour
   HD
   irrigated
-  water-total
-  urban-demand
-  price
   price-list
   price-factors
+  crop-list
+  crop-demand-list
   counter
+  ; for monitoring
+  water-total
+  urban-demand
+  urban-demand-acc
+  agro-demand-total
+  price
   ]
 
 ;turtles-own
@@ -74,8 +82,10 @@ breed[rivers river]
 irrigations-own[
   centroids
   area
+  crop-type
+  crop-demand
   productivity
-  demand
+  agro-demand
   id
   ]
 
@@ -128,6 +138,7 @@ to setup
 
   clear-all
   set-patch-size ps
+  initialize
   load-data
   draw-landscape
   calculate-metric-patch-size
@@ -137,7 +148,6 @@ to setup
   setup-irrigations
   rescale
   reset-ticks
-  initialize
 end
 
 
@@ -214,9 +224,12 @@ to setup-irrigations
     let contained patches gis:intersecting gis:find-one-feature irrigation-area "registro" word registro ""
     ask contained[
       set irrigation-id gis:property-value ? "registro"
-      set pcolor round irrigation-id / round 100
+      set pcolor round (62 + irrigation-id / 4500)
     ]
   ]
+  ask irrigations[
+    let cropr random 1
+    set crop-demand item cropr crop-demand-list]
 end
 
 
@@ -299,7 +312,7 @@ to setup-catchments
     let contained patches gis:intersecting gis:find-one-feature catchments-area "cueche_" word cueche-id ""
     ask contained[
       set catchment-id gis:property-value ? "cueche_"
-      set pcolor round catchment-id + 5
+      set pcolor 35
     ]
   ]
 end
@@ -334,8 +347,11 @@ to initialize
   set ebro-discharge-list [578067840 578067840 578067840 578067840 565306560 565306560 565306560 565306560 618770880 618770880 618770880 618770880 496540800 496540800 496540800 496540800 431161920 431161920 431161920 431161920 362124000 293086080 293086080 293086080 293086080 224350560 155615040 155615040 155615040 155615040 106142400 106142400 106142400 106142400 110799360 110799360 110799360 110799360 156159360 201519360 201519360 201519360 201519360 357920640 357920640 357920640 357920640 456563520 555206400 555206400 555206400 555206400] ; m³ / week
   set price 1
   set price-list [0.21 0.503 1.28]
-; β0 δ1 δ2 δ3 δ4 δ5 δ6 δ7 β1 β2 β3 β4
+;                     β0      δ1      δ2      δ3      δ4      δ5      δ6     δ7     β1           β2     β3      β4
   set price-factors [-0.7026 -0.2645 -1.0525 -0.9509 -0.1983 -0.0078 -0.0409 0.3228 0.000002941 -0.1087 0.0684 -0.0692]
+; water demand m³/m² alfalfa  corn
+  set crop-list ["alfalfa" "corn"]
+  set crop-demand-list [0.0511 0.0385]
 end
 
 
@@ -343,16 +359,16 @@ end
 
 ;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
 ;
-; HERE THE SETUP-PROCEDURES END, AND THE BEHAVIOUR-MODELLING BEGINS.
+;      HERE THE SETUP-PROCEDURES END, AND THE BEHAVIOUR-MODELLING BEGINS.
 ;
 ;________________________________________________________________________________
 
 to go
   weather
   household-demand-function
-  irrigate
   agro-demand-function
   aggregate
+  dynamics
   time
   rescale
   tick
@@ -370,7 +386,7 @@ end
 
 to rescale
   ask irrigations[
-    set size demand / 100000
+    set size agro-demand / 100000
   ]
 end
 
@@ -384,20 +400,20 @@ to weather
 ; It can be refined to reflect natural rainfall patterns.
 ;________________________________________________________________________________
 
-  ask patches[
-    rain-probability-function
-    ifelse (random-float 1 < rain-probability / 30)[
+  rain-probability-function
+  ifelse (random-float 1 < (rain-probability / 30))[
+    ask patches[
       set rain? 1
       set pcolor 9.9
-      set water item week precipitation-list / item week rain-list ; precipitation in mm
+      set water item week precipitation-list / item week rain-list ; precipitatio in mm
       set water metric-patch-size * metric-patch-size * water ; quantity of water in liters/patch
       set water water / 1000 ; quantity of water / patch in m³, equivalent to 1.000 liters
-      ][
+    ]][
+    ask patches[
       set rain? 0
       set water 0
-      set pcolor 35]
-  ]
-
+      set pcolor 35
+    ]]
   let t1 item week temperature-list
   let t2 item week temperature-list / 4
   set temperature random-normal t1 t2
@@ -415,39 +431,13 @@ end
 
 
 
-to irrigate
-;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
-; This function sets the irrigation necessity: If rain falls, irrigation is not
-; necessary, if it does not fall on a certain patch which is designated for
-; irrigation, it sets the patches flag to "Irrigation is necessary".
-; It is modelled after the irrigation period.
-;________________________________________________________________________________
-
-  ifelse (week >= 12) and (week <= 40)[
-    ask irrigated [
-      ifelse (rain? = 1)[
-        set irrigation-demand? 0
-        set pcolor 9.9][
-        set irrigation-demand? 1
-        set water water - 1
-        set pcolor 25]
-        ]
-    ][
-    ask irrigated[
-      set irrigation-demand? 0
-      ifelse (rain? = 1)[
-        set pcolor 9.9][
-        set pcolor 35]
-    ]
-    ]
-end
-
-
 
 to aggregate
   set ebro-discharge item week ebro-discharge-list + item week ebro-discharge-list * ((random-float 0.5) - 0.25)
-  set urban-demand sum [demand-agg] of households
+  set urban-demand-acc urban-demand-acc + sum [demand-agg] of households
+  set agro-demand-total sum [agro-demand] of irrigations
   set price sum [costs] of households / sum [demand] of households ; this function is not a scientific model! just for demonstration purposes
+  if (week = 51)[set urban-demand-acc 0]
 end
 
 
@@ -475,13 +465,14 @@ to household-demand-function
   let deit-2 item 1 cost-history
   let deit-4 item 3 cost-history
   if (deit-2 < 1)[set deit-2 (item 0 cost-history + item 2 cost-history) / 2 ]
-  if (deit-4 < 1)[set deit-4 2]
-  set demand e ^ (item 0 price-factors + item 1 price-factors * deit-2 + item 2 price-factors * D1 * deit-2 + item 3 price-factors * D2 * deit-2 + item 4 price-factors * D3 * deit-2 + item 5 price-factors * D4 * deit-2 + item 6 price-factors * HD + item 7 price-factors * ln deit-4 + item 8 price-factors * W + item 9 price-factors * CHW + item 10 price-factors * AG20 + item 11 price-factors * AG60 + (random-float 1) - 0.5)
+  if (deit-4 < 1)[set deit-4 mean cost-history]
+  set demand e ^ (item 0 price-factors + item 1 price-factors * deit-2 + item 2 price-factors * D1 * deit-2 + item 3 price-factors * D2 * deit-2 + item 4 price-factors * D3 * deit-2 + item 5 price-factors * D4 * deit-2 +
+     item 6 price-factors * HD + item 7 price-factors * ln deit-4 + item 8 price-factors * W + item 9 price-factors * CHW + item 10 price-factors * AG20 + item 11 price-factors * AG60 + (random-float 0.5) - 0.25)
   set demand demand * 7
   set demand-pc demand / hh-size
   set demand-acc demand-acc + demand
   set demand-agg demand-pc * population
-  if (counter = 13)[
+  if (counter = 12)[
     if (demand-acc / 13 / 7 <= 0.200)[
       set costs demand-acc * item 0 price-list]
     if (demand-acc / 13 / 7 > 0.200) and (demand-acc / 13 / 7 <= 0.616)[
@@ -508,28 +499,32 @@ to agro-demand-function
 ; function with different crop types and irrigation types.
 ;________________________________________________________________________________
 
+  ifelse (week > 12) and (week <= 40)[
+    ask irrigated[
+      set irrigation-demand? 1
+      set pcolor round (62 + irrigation-id / 4500)]][
+    ask irrigated[
+      set irrigation-demand? 0
+      set pcolor 35]
+      ]
+
   foreach sort-on [irrigation-id] irrigated[
     ask ? [
-      if (rain? = 0) and (irrigation-demand? = 1)[
+      ifelse (irrigation-demand? = 1)[
         let tempid [irrigation-id] of self
         ask irrigations with [irrigation-id = tempid][
-          set demand demand + metric-patch-size * metric-patch-size / 1000
+          set agro-demand area * crop-demand / 100
         ]
-      ]
-      if (rain? = 1) and (irrigation-demand? = 1)[
+      ][
         let tempid [irrigation-id] of self
         ask irrigations with [irrigation-id = tempid][
-          set demand demand + metric-patch-size * metric-patch-size / 1000 * (item week precipitation-list / item week rain-list - 10)
-        ]
-      ]
-      if (rain? = 1) and (irrigation-demand? = 0)[
-        let tempid [irrigation-id] of self
-        ask irrigations with [irrigation-id = tempid][
-          set demand 0
-        ]
+          set agro-demand 0]
       ]
     ]
   ]
+end
+
+to dynamics
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -609,9 +604,10 @@ true
 true
 "" ""
 PENS
-"urban demand" 1.0 0 -6459832 true "" "plot urban-demand"
-"agric. demand" 1.0 0 -955883 true "" "plot sum [demand] of irrigations"
-"overall demand" 1.0 0 -10899396 true "" "plot urban-demand + sum [demand] of irrigations"
+"urban demand" 1.0 0 -4079321 true "" "plot urban-demand"
+"overall demand" 1.0 0 -2674135 true "" "plot urban-demand + sum [agro-demand] of irrigations"
+"agric. demand" 1.0 0 -13840069 true "" "plot agro-demand-total"
+"urban demand acc" 1.0 0 -8053223 true "" "plot urban-demand-acc"
 
 MONITOR
 226
@@ -839,7 +835,7 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot (sum [demand-pc] of households / sum [hh-size] of households / 7) * 1000"
+"default" 1.0 0 -16777216 true "" "plot (sum [demand-pc] of households with [demand-pc > 1] / sum [hh-size] of households / 7) * 1000"
 
 PLOT
 1176
@@ -850,7 +846,7 @@ household demand
 NIL
 NIL
 0.0
-100.0
+50.0
 0.0
 10.0
 true
@@ -976,10 +972,10 @@ true
 false
 "" ""
 PENS
-"default" 1.0 1 -16777216 true "" "histogram [item 0 cost-history] of households with [demand < 1]"
-"pen-1" 1.0 1 -7500403 true "" "histogram [item 1 cost-history] of households with [demand < 1]"
-"pen-2" 1.0 1 -2674135 true "" "histogram [item 2 cost-history] of households with [demand < 1]"
-"pen-3" 1.0 1 -955883 true "" "histogram [item 3 cost-history] of households with [demand < 1]"
+"default" 1.0 1 -16777216 true "" "histogram [item 0 cost-history] of households with [demand > 1]"
+"pen-1" 1.0 1 -7500403 true "" "histogram [item 1 cost-history] of households with [demand > 1]"
+"pen-2" 1.0 1 -2674135 true "" "histogram [item 2 cost-history] of households with [demand > 1]"
+"pen-3" 1.0 1 -955883 true "" "histogram [item 3 cost-history] of households with [demand > 1]"
 
 PLOT
 771
@@ -998,6 +994,100 @@ false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "plot sum [demand] of households / 1000"
+
+PLOT
+764
+588
+1170
+738
+irrigation per m²
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot sum [agro-demand] of irrigations / sum [area] of irrigations"
+
+PLOT
+1470
+213
+1670
+363
+Wealth
+NIL
+NIL
+0.0
+100000.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 5000.0 1 -16777216 true "" "histogram [W] of households"
+
+MONITOR
+1674
+212
+1785
+257
+NIL
+mean [W] of households
+17
+1
+11
+
+PLOT
+1474
+383
+1674
+533
+household size
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 1 -16777216 true "" "histogram [hh-size] of households"
+
+PLOT
+1481
+586
+1681
+736
+demand p.c.
+NIL
+NIL
+0.0
+30.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 1 -16777216 true "" "histogram [demand-pc] of households"
+
+MONITOR
+1174
+776
+1438
+821
+NIL
+count households with [demand > 1]
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
