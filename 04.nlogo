@@ -58,6 +58,7 @@ globals[
   urban-demand
   urban-demand-acc
   agro-demand-total
+  agro-demand-acc
   price
   ]
 
@@ -80,13 +81,15 @@ breed[rivers river]
 
 
 irrigations-own[
+  id
   centroids
   area
+  area-type ; 0 for small, 1 for large
   crop-type
   crop-demand
+  irrigation-type ; 0 for surface, 1 for pressurized
   productivity
   agro-demand
-  id
   ]
 
 households-own[
@@ -145,7 +148,7 @@ to setup
   setup-households
   setup-water-utilities
   setup-catchments
-  setup-irrigations
+  setup-agriculture
   rescale
   reset-ticks
 end
@@ -200,7 +203,7 @@ end
 
 
 
-to setup-irrigations
+to setup-agriculture
 ;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
 ; This function takes the feature list of irrigated areas from the GIS-data
 ; and creates one agent representing one irrigated area.
@@ -214,7 +217,13 @@ to setup-irrigations
     set xcor item 0 location
     set ycor item 1 location
     set size 0.5
-    set area gis:property-value ? "area"
+    set irrigation-type 0
+    set crop-type 0
+    set area gis:property-value ? "area" / 10000 ; transform to ha (100x100 m)
+    let cropr random 2
+    set crop-demand item cropr crop-demand-list
+    let typer random 2
+    if (typer = 1)[set irrigation-type 1]
   ]]
   set irrigated patches gis:intersecting irrigation-area
   let irrigation-list gis:feature-list-of irrigation-area
@@ -227,9 +236,6 @@ to setup-irrigations
       set pcolor round (62 + irrigation-id / 4500)
     ]
   ]
-  ask irrigations[
-    let cropr random 1
-    set crop-demand item cropr crop-demand-list]
 end
 
 
@@ -252,29 +258,26 @@ to setup-households
     set ycor item 1 location
     set size 2
     set population gis:property-value ? "pobla_06" / 1000
-    let hogares (random-float 1) * 100
     set D1 0
     set D2 0
     set D3 0
     set D4 0
     set AG20 0
     set AG60 0
+    let hogares (random-float 1) * 100
     if (hogares >= 00.00) and (hogares < 11.61)[
       set D1 1
       set hh-size 1]
     if (hogares >= 11.61) and (hogares < 45.55)[
       set D2 1
-      set population population / 2
       set hh-size 2]
     if (hogares >= 45.55) and (hogares < 70.88)[
       set D3 1
-      set population population / 3
       set hh-size 3]
     if (hogares >= 70.88) and (hogares <= 100)[
       set D4 1
-      set population population / 4
       set hh-size 4]
-    set W random-normal 27874 16421
+    set W random-normal 25874 16421
     while [W < 5000] [set W random-normal 27874 16421]
     let CHWr random-float 1
     if (CHWr > 0.5) [set CHW 1]
@@ -303,7 +306,8 @@ to setup-water-utilities
     ]
   ]
 end
-      
+
+
 
 to setup-catchments
   let catchments-list gis:feature-list-of catchments-area
@@ -316,6 +320,7 @@ to setup-catchments
     ]
   ]
 end
+
 
 to calculate-metric-patch-size
   let world-size gis:world-envelope
@@ -351,7 +356,7 @@ to initialize
   set price-factors [-0.7026 -0.2645 -1.0525 -0.9509 -0.1983 -0.0078 -0.0409 0.3228 0.000002941 -0.1087 0.0684 -0.0692]
 ; water demand m³/m² alfalfa  corn
   set crop-list ["alfalfa" "corn"]
-  set crop-demand-list [0.0511 0.0385]
+  set crop-demand-list [420 343]
 end
 
 
@@ -366,13 +371,14 @@ end
 to go
   weather
   household-demand-function
-  agro-demand-function
+  agriculture-demand-function
   aggregate
   dynamics
   time
   rescale
   tick
 end
+
 
 
 to time
@@ -384,9 +390,10 @@ to time
 end
 
 
+
 to rescale
   ask irrigations[
-    set size agro-demand / 100000
+    set size agro-demand / 50000
   ]
 end
 
@@ -435,9 +442,11 @@ end
 to aggregate
   set ebro-discharge item week ebro-discharge-list + item week ebro-discharge-list * ((random-float 0.5) - 0.25)
   set urban-demand-acc urban-demand-acc + sum [demand-agg] of households
+  set agro-demand-acc agro-demand-acc + sum [agro-demand] of irrigations
+  set urban-demand mean [demand-pc] of households * sum [population] of households
   set agro-demand-total sum [agro-demand] of irrigations
-  set price sum [costs] of households / sum [demand] of households ; this function is not a scientific model! just for demonstration purposes
-  if (week = 51)[set urban-demand-acc 0]
+  set price sum [costs] of households / sum [demand] of households / 7 ; this function is not a scientific model! just for demonstration purposes
+  if (week = 51)[set urban-demand-acc 0 set agro-demand-acc 0]
 end
 
 
@@ -452,7 +461,8 @@ to household-demand-function
 ; later aggregated in the aggregate-procedure.
 ;
 ; Demand function according to Arbues et al. 2010.
-; qit = e ^ ( β0 + δ1 * deit-2 + δ2 * D1 * deit-2 + δ3 * D2 * deit-2 + δ4 * D3 * deit-2 + δ5 * D4 * deit-2 + δ6 * HD + δ7 ln deit-4 + β1 * W + β2 * CHW + β3 * AG20 + β4 * AG60 * u)
+; qit = e ^ ( β0 + δ1 * deit-2 + δ2 * D1 * deit-2 + δ3 * D2 * deit-2 + δ4 * D3 * deit-2 + δ5 * D4 * deit-2 + 
+;             δ6 * HD + δ7 ln deit-4 + β1 * W + β2 * CHW + β3 * AG20 + β4 * AG60 * u)
 ;
 ; This function then calculates the costs for households.
 ; In a more advanced version, price discrimination can be introduced.
@@ -466,13 +476,25 @@ to household-demand-function
   let deit-4 item 3 cost-history
   if (deit-2 < 1)[set deit-2 (item 0 cost-history + item 2 cost-history) / 2 ]
   if (deit-4 < 1)[set deit-4 mean cost-history]
-  set demand e ^ (item 0 price-factors + item 1 price-factors * deit-2 + item 2 price-factors * D1 * deit-2 + item 3 price-factors * D2 * deit-2 + item 4 price-factors * D3 * deit-2 + item 5 price-factors * D4 * deit-2 +
-     item 6 price-factors * HD + item 7 price-factors * ln deit-4 + item 8 price-factors * W + item 9 price-factors * CHW + item 10 price-factors * AG20 + item 11 price-factors * AG60 + (random-float 0.5) - 0.25)
+  set demand e ^ (
+    item 0 price-factors + 
+    item 1 price-factors * deit-2 + 
+    item 2 price-factors * D1 * deit-2 + 
+    item 3 price-factors * D2 * deit-2 + 
+    item 4 price-factors * D3 * deit-2 + 
+    item 5 price-factors * D4 * deit-2 +
+    item 6 price-factors * HD + 
+    item 7 price-factors * (ln deit-4) + 
+    item 8 price-factors * W + 
+    item 9 price-factors * CHW + 
+    item 10 price-factors * AG20 + 
+    item 11 price-factors * AG60 + 
+    (random-float 0.5) - 0.25)
   set demand demand * 7
   set demand-pc demand / hh-size
   set demand-acc demand-acc + demand
   set demand-agg demand-pc * population
-  if (counter = 12)[
+  if (counter = 13)[
     if (demand-acc / 13 / 7 <= 0.200)[
       set costs demand-acc * item 0 price-list]
     if (demand-acc / 13 / 7 > 0.200) and (demand-acc / 13 / 7 <= 0.616)[
@@ -490,7 +512,7 @@ to household-demand-function
 end
 
 
-to agro-demand-function
+to agriculture-demand-function
 ;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
 ; This function calculates the water demand for agriculture, starting with a
 ; simple demand = 1 for each unwatered patch.
@@ -513,9 +535,8 @@ to agro-demand-function
       ifelse (irrigation-demand? = 1)[
         let tempid [irrigation-id] of self
         ask irrigations with [irrigation-id = tempid][
-          set agro-demand area * crop-demand / 100
-        ]
-      ][
+          set agro-demand area / 10 * crop-demand
+        ]][
         let tempid [irrigation-id] of self
         ask irrigations with [irrigation-id = tempid][
           set agro-demand 0]
@@ -528,13 +549,13 @@ to dynamics
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
--4
-287
-729
-681
-120
-60
-3.0
+3
+155
+738
+551
+72
+36
+5.0
 1
 10
 1
@@ -544,10 +565,10 @@ GRAPHICS-WINDOW
 0
 0
 1
--120
-120
--60
-60
+-72
+72
+-36
+36
 0
 0
 1
@@ -555,10 +576,10 @@ ticks
 30.0
 
 BUTTON
-11
-14
-84
-47
+9
+10
+82
+43
 NIL
 setup
 NIL
@@ -572,10 +593,10 @@ NIL
 1
 
 BUTTON
-118
-55
-189
-88
+182
+10
+253
+43
 NIL
 go
 T
@@ -589,10 +610,10 @@ NIL
 1
 
 PLOT
-738
-11
-1280
-163
+743
+10
+1285
+130
 demand
 week
 quantity
@@ -607,13 +628,12 @@ PENS
 "urban demand" 1.0 0 -4079321 true "" "plot urban-demand"
 "overall demand" 1.0 0 -2674135 true "" "plot urban-demand + sum [agro-demand] of irrigations"
 "agric. demand" 1.0 0 -13840069 true "" "plot agro-demand-total"
-"urban demand acc" 1.0 0 -8053223 true "" "plot urban-demand-acc"
 
 MONITOR
-226
-82
-283
-127
+262
+10
+319
+55
 NIL
 week
 17
@@ -621,10 +641,10 @@ week
 11
 
 MONITOR
-282
-82
-339
-127
+318
+10
+375
+55
 NIL
 year
 17
@@ -632,50 +652,28 @@ year
 11
 
 MONITOR
-42
-694
-223
-739
-NIL
-rain-probability / 30 * 100
-17
-1
-11
-
-MONITOR
-42
-746
-199
-791
-total quantity of water
-sum [water] of patches
-17
-1
-11
-
-MONITOR
-353
-12
-410
-57
-NIL
+513
+104
+622
+149
+avg. price / m³
 price
 17
 1
 11
 
 PLOT
-771
-463
-1166
-583
+765
+371
+1175
+491
 price
 NIL
 NIL
 0.0
 10.0
 0.0
-10.0
+1.0
 true
 false
 "" ""
@@ -683,25 +681,25 @@ PENS
 "price" 1.0 0 -2674135 true "" "plot price"
 
 SLIDER
-3
-154
-175
-187
+8
+50
+180
+83
 ps
 ps
 1
 5
-3
+5
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-3
-194
-175
-227
+8
+90
+180
+123
 world-extent
 world-extent
 360
@@ -713,32 +711,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-226
-146
-366
-191
-patch length [m]
-metric-patch-size
-17
-1
-11
-
-MONITOR
-226
-193
-347
-238
-patch area [km²]
-metric-patch-size * metric-patch-size / 1000000
-17
-1
-11
-
-MONITOR
-539
-16
-620
-61
+590
+10
+671
+55
 population
 sum [population] of households
 17
@@ -746,10 +722,10 @@ sum [population] of households
 11
 
 MONITOR
-419
-14
-528
-59
+479
+10
+588
+55
 urban demand
 sum [demand] of households
 17
@@ -757,10 +733,10 @@ sum [demand] of households
 11
 
 PLOT
-349
-681
-742
-838
+768
+613
+1178
+733
 Temperature
 NIL
 NIL
@@ -776,54 +752,43 @@ PENS
 "hot day?" 1.0 1 -7500403 true "" "plot HD"
 
 MONITOR
-505
-93
-707
-138
-demand per household / day
+383
+57
+517
+102
+demand per hh / day
 sum [demand] of households / count households / 7
 17
 1
 11
 
 MONITOR
-502
-148
-660
-193
-costs
-sum [item 1 cost-history] of households / 1000
+383
+104
+511
+149
+avg. costs / quarter
+sum [costs] of households / 1000
 17
 1
 11
 
 MONITOR
-630
-23
-725
-68
+383
+10
+478
+55
 demand p.c.
 sum [demand-pc] of households / sum [hh-size] of households / 7
 17
 1
 11
 
-MONITOR
-236
-701
-331
-746
-NIL
-temperature
-17
-1
-11
-
 PLOT
-760
-160
-1164
-314
+773
+131
+1173
+251
 demand p.c.
 NIL
 NIL
@@ -838,112 +803,46 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot (sum [demand-pc] of households with [demand-pc > 1] / sum [hh-size] of households / 7) * 1000"
 
 PLOT
-1176
-577
-1460
-762
-household demand
+1452
+10
+1612
+130
+household demand / day
 NIL
 NIL
-0.0
-50.0
 0.0
 10.0
-true
+0.0
+50.0
+false
 false
 "" ""
 PENS
-"default" 1.0 1 -16777216 true "" "histogram [demand] of households"
-
-MONITOR
-1284
-12
-1569
-57
-NIL
-mean [item 0 cost-history] of households
-17
-1
-11
-
-MONITOR
-1285
-63
-1570
-108
-NIL
-mean [item 1 cost-history] of households
-17
-1
-11
-
-MONITOR
-1285
-112
-1570
-157
-NIL
-mean [item 2 cost-history] of households
-17
-1
-11
-
-MONITOR
-1282
-161
-1567
-206
-NIL
-mean [item 3 cost-history] of households
-17
-1
-11
-
-MONITOR
-1581
-14
-1822
-59
-NIL
-mean [demand-acc] of households
-17
-1
-11
-
-MONITOR
-1581
-67
-1778
-112
-NIL
-mean [costs] of households
-17
-1
-11
+"default" 0.1 1 -16777216 true "" "histogram [demand / 7] of households with [demand > 1]"
 
 PLOT
-1171
-212
-1458
-403
+1289
+10
+1449
+130
 costs
 NIL
 NIL
 0.0
 100.0
 0.0
-10.0
-true
+30.0
+false
 false
 "" ""
 PENS
-"default" 1.0 1 -16777216 true "" "histogram [costs] of households with [demand < 1]"
+"default" 1.0 1 -16777216 true "" "histogram [costs] of households with [costs > 1]"
 
 BUTTON
-16
-55
-106
-88
+87
+10
+177
+43
 go once
 go
 NIL
@@ -957,50 +856,50 @@ NIL
 1
 
 PLOT
-1174
-404
-1458
-575
+1289
+131
+1449
+251
 cost-history
 NIL
 NIL
 0.0
 100.0
 0.0
-10.0
-true
+30.0
+false
 false
 "" ""
 PENS
-"default" 1.0 1 -16777216 true "" "histogram [item 0 cost-history] of households with [demand > 1]"
-"pen-1" 1.0 1 -7500403 true "" "histogram [item 1 cost-history] of households with [demand > 1]"
-"pen-2" 1.0 1 -2674135 true "" "histogram [item 2 cost-history] of households with [demand > 1]"
-"pen-3" 1.0 1 -955883 true "" "histogram [item 3 cost-history] of households with [demand > 1]"
+"default" 1.0 1 -16777216 true "" "histogram [item 0 cost-history] of households with [costs > 1]"
+"pen-1" 1.0 1 -7500403 true "" "histogram [item 1 cost-history] of households with [costs > 1]"
+"pen-2" 1.0 1 -2674135 true "" "histogram [item 2 cost-history] of households with [costs > 1]"
+"pen-3" 1.0 1 -955883 true "" "histogram [item 3 cost-history] of households with [costs > 1]"
 
 PLOT
-771
-312
-1163
-462
-demand per household
+769
+250
+1172
+370
+demand per household per day
 NIL
 NIL
 0.0
 10.0
 0.0
-10.0
+5.0
 true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot sum [demand] of households / 1000"
+"default" 1.0 0 -16777216 true "" "plot sum [demand] of households / 7"
 
 PLOT
-764
-588
-1170
-738
-irrigation per m²
+778
+492
+1176
+612
+irrigation per m² / week
 NIL
 NIL
 0.0
@@ -1011,80 +910,109 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot sum [agro-demand] of irrigations / sum [area] of irrigations"
+"default" 1.0 0 -16777216 true "" "plot sum [agro-demand / 7] of irrigations / sum [area] of irrigations"
 
 PLOT
-1470
-213
-1670
-363
-Wealth
+1452
+132
+1612
+252
+demand p.c. / day
 NIL
 NIL
 0.0
-100000.0
+10.0
+0.0
+30.0
+false
+false
+"" ""
+PENS
+"default" 0.1 1 -16777216 true "" "histogram [demand-pc / 7] of households with [demand > 1]"
+
+PLOT
+1295
+494
+1455
+614
+irrigation demand
+NIL
+NIL
+0.0
+500000.0
 0.0
 10.0
 true
 false
 "" ""
 PENS
-"default" 5000.0 1 -16777216 true "" "histogram [W] of households"
+"default" 10000.0 1 -16777216 true "" "histogram [agro-demand] of irrigations"
 
 MONITOR
-1674
-212
-1785
-257
+1525
+497
+1765
+542
 NIL
-mean [W] of households
+mean [agro-demand] of irrigations
 17
 1
 11
 
 PLOT
-1474
-383
-1674
-533
-household size
+1294
+372
+1454
+492
+area
 NIL
 NIL
 0.0
-10.0
+2000000.0
 0.0
 10.0
 true
 false
 "" ""
 PENS
-"default" 1.0 1 -16777216 true "" "histogram [hh-size] of households"
+"default" 50000.0 1 -16777216 true "" "histogram [area] of irrigations"
 
 PLOT
-1481
-586
-1681
-736
-demand p.c.
+1292
+641
+1492
+791
+irrigations
 NIL
 NIL
 0.0
-30.0
+1000.0
 0.0
 10.0
 true
 false
 "" ""
 PENS
-"default" 1.0 1 -16777216 true "" "histogram [demand-pc] of households"
+"default" 1.0 1 -16777216 true "" "histogram [crop-demand] of irrigations"
 
 MONITOR
-1174
-776
-1438
-821
+766
+753
+928
+798
 NIL
-count households with [demand > 1]
+agro-demand-acc
+17
+1
+11
+
+MONITOR
+938
+755
+1112
+800
+NIL
+sum [area] of irrigations
 17
 1
 11
