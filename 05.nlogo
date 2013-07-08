@@ -2,8 +2,6 @@
 ; To implement:
 ; different household agents (income groups, demand behaviour, decision making)
 ; dynamic demand (demand curves)
-; price calculation
-; refine rainfall model ( l / m³ )
 ; add supply via rivers and calculate outtake to satisfy demand
 ; aggregate behaviour (catchments vs. irrigations | rivers vs. urban demand)
 ; adaptive decision making
@@ -37,17 +35,18 @@ globals[
   ; for environmental simulation
   week
   year
+  world-extent
   metric-patch-size
-  rain-list
-  precipitation-list
-  rain-probability
   temperature-list
   temperature
   ebro-discharge-list-mean
   ebro-discharge-list-min
   ebro-discharge-list-max
   ebro-discharge
+  drought?
   ; for agent behaviour
+  availiable-water
+  storage
   HD
   irrigated
   price-list
@@ -96,6 +95,7 @@ irrigations-own[
   demand
   utility
   costs
+  drought-memory
   ]
 
 households-own[
@@ -122,7 +122,6 @@ households-own[
 
 water-utilities-own[
   cash
-  supply
   demand
   id
   ]
@@ -150,7 +149,8 @@ to setup
 ;________________________________________________________________________________
 
   clear-all
-  set-patch-size ps
+  set-patch-size 4
+  set world-extent 360
   initialize
   load-data
   draw-landscape
@@ -235,6 +235,7 @@ to setup-agriculture
     set crop-demand item cropr crop-demand-list
     set crop-productivity item cropr crop-productivity-list
     let typer random 2
+    set drought-memory 0
     if (typer = 1)[set irrigation-type 1]
   ]]
   set irrigated patches gis:intersecting irrigation-area
@@ -373,10 +374,7 @@ to initialize
 ;________________________________________________________________________________
 
   set week 0
-  set year 0
-  set rain-list [7 7 7 7 6 6 6 6 6 6 6 6 7 8 8 8 8 9 9 9 9 7 6 6 6 6 4 4 4 4 4 4 4 4 5 5 5 5 6 7 7 7 7 8 8 8 8 9 9 9 9 8]
-  set precipitation-list [22 22 22 22 20 20 20 20 20 20 20 20 27 35 35 35 35 44 44 44 44 37 31 31 31 31 18 18 18 18 17 17 17 17 32 27 27 27 27 30 30 30 30 30 30 30 30 25 23 23 23 23]
-  set temperature-list [6.35 6.35 6.35 6.35 8.4 8.4 8.4 8.4 10.9 10.9 10.9 10.9 10.9 13.1 13.1 13.1 13.1 13.1 17.2 17.2 17.2 17.2 17.2 21.25 21.25 21.25 21.25 24.6 24.6 24.6 24.6 24.4 24.4 24.4 20.7 20.7 20.7 20.7 20.7 15.5 15.5 15.5 15.5 10.1 10.1 10.1 10.1 7. 7. 7. 7. 7.]
+  set year 0  set temperature-list [6.35 6.35 6.35 6.35 8.4 8.4 8.4 8.4 10.9 10.9 10.9 10.9 10.9 13.1 13.1 13.1 13.1 13.1 17.2 17.2 17.2 17.2 17.2 21.25 21.25 21.25 21.25 24.6 24.6 24.6 24.6 24.4 24.4 24.4 20.7 20.7 20.7 20.7 20.7 15.5 15.5 15.5 15.5 10.1 10.1 10.1 10.1 7. 7. 7. 7. 7.]
   set ebro-discharge-list-mean [370 370 370 385 400 416 416 430 430 447 447 420 399 398 397 380 367 357 347 337 318 308 298 288 279 268 180 148 139 128 108 99 89 91 92 95 97 110 120 119 168 183 193 220 240 292 310 328 338 340 348 358]
   set ebro-discharge-list-min [80 88 88 88 88 75 75 75 75 65 57 57 57 57 65 65 45 35 35 26 26 37 48 53 40 35 30 25 12 12 14 14 18 22 28 30 30 30 30 28 28 28 32 35 40 44 49 55 66 66 77 77]
   set ebro-discharge-list-max[1199 1199 1199 1199 1140 1089 1089 1289 1289 1495 1495 1495 1300 1200 1100 1050 974 974 1100 1297 1297 1297 1250 1090 996 890 830 790 690 562 462 369 340 320 279 289 295 310 340 395 440 495 540 595 695 758 759 801 850 901 1150 1313]
@@ -401,11 +399,15 @@ end
 ;________________________________________________________________________________
 
 to go
-  weather
+  environment
   household-demand-function
   agriculture-demand-function
   aggregate
-  learn
+  supply
+  if (hh-learning?) [hh-learn]
+  if (hh-tech-improve?) [hh-tech-improve]
+  if (agro-learn?) [agro-learn]
+  if (agro-tech-improve?) [agro-tech-improve]
   time
   tick
 end
@@ -417,18 +419,21 @@ to time
   if (week = 52)[
     set week 0
     set year year + 1
+    ifelse (random-float 1 > drought-possibility)[set drought? FALSE][set drought? TRUE]
   ]
 end
 
 
 
-to weather
+to environment
 ;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
 ; This function is modeling the random natural water supply, mainly through
 ; precipitation. It reflects yearly rainfall patterns with certain random factor.
 ; It can be refined to reflect natural rainfall patterns.
 ;________________________________________________________________________________
 
+  set ebro-discharge item week ebro-discharge-list-mean + item week ebro-discharge-list-mean * ((random-float 0.4) - 0.2) ; Hm³ = mio m³
+  if drought? = TRUE [set ebro-discharge ebro-discharge * ((random-float 0.1) + 0.5)]
   let t1 item week temperature-list
   let t2 item week temperature-list / 4
   set temperature random-normal t1 t2
@@ -436,28 +441,33 @@ to weather
     set HD 1][
     set HD 0]
 end
-  
-
-
-to rain-probability-function
-  set rain-probability item week rain-list
-  set rain-probability rain-probability
-end
-
-
 
 
 to aggregate
-  set ebro-discharge item week ebro-discharge-list-mean + item week ebro-discharge-list-mean * ((random-float 0.5) - 0.25) ; Hm³ = mio m³
-  set urban-demand-acc urban-demand-acc + sum [demand-agg] of households ; m³
-  set agro-demand-acc agro-demand-acc + sum [demand] of irrigations ; m³
-  set urban-demand mean [demand-pc] of households * sum [population] of households ; m³
-  set agro-demand-total sum [demand] of irrigations ; m³
+  set urban-demand-acc urban-demand-acc + sum [demand-agg] of households / 1000000; Hm³
+  set agro-demand-acc agro-demand-acc + sum [demand] of irrigations / 1000000 ; Hm³
+  set urban-demand (mean [demand-pc] of households * sum [population] of households) / 1000000; m³
+  set agro-demand-total sum [demand] of irrigations / 1000000 ; m³
   set price sum [costs] of households / sum [demand] of households / 7 ; this function is not a scientific model! just for demonstration purposes
   set economic-value urban-demand * price
   if (week = 51)[set urban-demand-acc 0 set agro-demand-acc 0]
 end
 
+
+to supply
+  set availiable-water ebro-discharge - minimum-flow * 3600 * 24 * 7 / 1000000; Hm³ / week <=> 350m³ / s
+  if (availiable-water > 0) and (storage <= 6837)[
+    let fill 6837 - storage
+    ifelse (availiable-water <= fill) [
+      set storage storage + availiable-water; max 6837 Hm³
+      set availiable-water 0][
+      set storage storage + fill
+      set availiable-water availiable-water - fill]]
+  if (availiable-water < 0) and (storage > 0)[
+    set storage storage + availiable-water
+    set availiable-water 0]
+  set storage storage - urban-demand - agro-demand-total
+end
 
 
 
@@ -510,6 +520,7 @@ to household-demand-function
       set costs demand-acc * item 1 price-list]
     if (demand-acc / 13 / 7 > 0.616)[
       set costs demand-acc * item 2 price-list]
+  set costs costs + costs * cost-dynamics * year
   set cost-history replace-item 3 cost-history item 2 cost-history
   set cost-history replace-item 2 cost-history item 1 cost-history
   set cost-history replace-item 1 cost-history item 0 cost-history
@@ -540,15 +551,15 @@ to agriculture-demand-function
       set pcolor 35]
       ]
    ask irrigations[
-     set demand crop-demand * area  / 10 * irrigation-demand? ; m³/10.000 m² * m ² = m³
-     set utility crop-productivity * irrigation-demand? * 1000
-     set costs demand * price * 0.5
+     set demand crop-demand * area * 0.8 * irrigation-demand? ; m³/10.000 m² * m ² = m³
+     set costs crop-demand * price * 0.25 * area
+     set utility ln crop-productivity * (1 - drought-memory * 0.2) ^ 5 / crop-demand * 1000
    ]
 end
 
-to learn
-  if week mod 12 = 4 and year > 3[
-  ask n-of 600 households[
+to hh-tech-improve
+  if week mod 12 = 4 and year > 2[
+  ask n-of 300 households[
     let own-utility utility
     let own-costs mean cost-history
     let peers households with [costs < own-costs]
@@ -557,9 +568,13 @@ to learn
       let peers-tech mean [tech-factor] of peers
       if (peers-tech > 1.05)[
         set tech-factor 1.1]
-    ]
+    ]]
   ]
-  ask n-of 50 households[
+end
+
+to hh-learn
+  if week mod 12 = 4 and year > 2[
+  ask n-of 36 households[
     let own-utility utility
     let own-costs mean cost-history
     let peers households with [costs < own-costs]
@@ -570,19 +585,43 @@ to learn
       set hh-size peers-size]
     ]
   ]
-  ask irrigations[
-    ]
   ]
+end
+
+to agro-learn
+  if (week = 10)[ ask irrigations[
+      ifelse (drought? = TRUE)[
+        set drought-memory drought-memory + 1][
+        set drought-memory drought-memory - 1]
+      if (drought-memory < 1) [set drought-memory 0]
+      if (drought-memory > 5) [set drought-memory 5]
+  ]]
+  if (week = 11)[
+    ask n-of 36 irrigations[
+      let strategies [0 0 0 0]
+      set strategies replace-item 0 strategies (item 0 crop-productivity-list / item 0 crop-demand-list * (1 - drought-memory) ^ 5)
+      set strategies replace-item 1 strategies (item 1 crop-productivity-list / item 1 crop-demand-list * (1 - drought-memory) ^ 5)
+      set strategies replace-item 2 strategies (item 2 crop-productivity-list / item 2 crop-demand-list * (1 - drought-memory) ^ 5)
+      set strategies replace-item 3 strategies (item 3 crop-productivity-list / item 3 crop-demand-list * (1 - drought-memory) ^ 5)
+      let max-value max strategies
+      let index position max-value strategies
+      set crop-type item index crop-list
+      set crop-demand item index crop-demand-list
+      set crop-productivity item index crop-productivity-list
+    ]]
+end
+
+to agro-tech-improve
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-3
-155
-738
-551
-72
-36
-5.0
+1
+150
+735
+545
+90
+45
+4.0
 1
 10
 1
@@ -592,10 +631,10 @@ GRAPHICS-WINDOW
 0
 0
 1
--72
-72
--36
-36
+-90
+90
+-45
+45
 0
 0
 1
@@ -637,10 +676,10 @@ NIL
 1
 
 PLOT
-728
-10
-1270
-130
+3
+550
+676
+807
 supply & demand
 week
 quantity
@@ -653,14 +692,17 @@ true
 "" ""
 PENS
 "urban demand" 1.0 0 -4079321 true "" "plot urban-demand"
-"overall demand" 1.0 0 -2674135 true "" ";plot urban-demand + sum [demand] of irrigations"
-"agric. demand" 1.0 0 -13840069 true "" ";plot agro-demand-total"
-"ebro discharge" 1.0 0 -13345367 true "" ";plot ebro-discharge * 1000000"
+"overall demand" 1.0 0 -2674135 true "" "plot urban-demand + agro-demand-total"
+"agric. demand" 1.0 0 -13840069 true "" "plot agro-demand-total"
+"availiable water" 1.0 0 -13345367 true "" "plot availiable-water"
+"ebro minimum flow" 1.0 0 -16777216 true "" "plot minimum-flow * 3600 * 24 * 7 / 1000000"
+"ebro discharge" 1.0 0 -11221820 true "" "plot ebro-discharge"
+"storage" 1.0 0 -16449023 true "" "plot storage"
 
 MONITOR
-262
+775
 10
-319
+832
 55
 NIL
 week
@@ -669,9 +711,9 @@ week
 11
 
 MONITOR
-318
+831
 10
-375
+888
 55
 NIL
 year
@@ -680,9 +722,9 @@ year
 11
 
 MONITOR
-513
+1026
 104
-622
+1135
 149
 avg. price / m³
 price
@@ -691,10 +733,10 @@ price
 11
 
 PLOT
-750
-371
-1160
-491
+747
+389
+1157
+509
 price
 NIL
 NIL
@@ -708,40 +750,10 @@ false
 PENS
 "price" 1.0 0 -2674135 true "" "plot price"
 
-SLIDER
-8
-50
-180
-83
-ps
-ps
-1
-5
-5
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-8
-90
-180
-123
-world-extent
-world-extent
-360
-600
-360
-60
-1
-NIL
-HORIZONTAL
-
 MONITOR
-295
+808
 58
-376
+889
 103
 population
 sum [population] of households
@@ -750,9 +762,9 @@ sum [population] of households
 11
 
 MONITOR
-479
+992
 10
-622
+1135
 55
 urban demand
 sum [demand] of households
@@ -761,10 +773,10 @@ sum [demand] of households
 11
 
 PLOT
-753
-613
-1163
-733
+750
+631
+1160
+751
 Temperature
 NIL
 NIL
@@ -780,9 +792,9 @@ PENS
 "hot day?" 1.0 1 -7500403 true "" "plot HD"
 
 MONITOR
-383
+896
 57
-517
+1030
 102
 demand per hh / day
 sum [demand] of households / count households / 7
@@ -791,9 +803,9 @@ sum [demand] of households / count households / 7
 11
 
 MONITOR
-383
+896
 104
-511
+1024
 149
 avg. costs / quarter
 sum [costs] of households / 1000
@@ -802,9 +814,9 @@ sum [costs] of households / 1000
 11
 
 MONITOR
-383
+896
 10
-478
+991
 55
 demand p.c.
 sum [demand-pc] of households / sum [hh-size] of households / 7
@@ -813,10 +825,10 @@ sum [demand-pc] of households / sum [hh-size] of households / 7
 11
 
 PLOT
-758
-131
-1158
-251
+755
+149
+1155
+269
 demand p.c. [liters / day]
 NIL
 NIL
@@ -905,10 +917,10 @@ PENS
 "pen-3" 1.0 1 -955883 true "" "histogram [item 3 cost-history] of households with [costs > 1]"
 
 PLOT
-754
-250
-1157
-370
+751
+268
+1154
+388
 mean utility of households
 NIL
 NIL
@@ -923,10 +935,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot mean [utility] of households"
 
 PLOT
-763
-492
-1161
-612
+760
+510
+1158
+630
 irrigation per m² / week
 NIL
 NIL
@@ -1061,7 +1073,7 @@ agro-utility
 NIL
 NIL
 0.0
-1000.0
+100.0
 0.0
 10.0
 true
@@ -1071,9 +1083,9 @@ PENS
 "default" 0.2 1 -16777216 true "" "histogram [utility] of irrigations with [utility > 1]"
 
 MONITOR
-520
+1033
 57
-668
+1181
 102
 NIL
 agro-demand-total
@@ -1112,24 +1124,6 @@ mean [hh-size] of households
 17
 1
 11
-
-PLOT
-5
-558
-588
-693
-econometrics
-NIL
-NIL
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "plot economic-value"
 
 PLOT
 1646
@@ -1177,6 +1171,106 @@ mean [tech-factor] of households
 17
 1
 11
+
+SWITCH
+10
+46
+143
+79
+hh-learning?
+hh-learning?
+0
+1
+-1000
+
+SWITCH
+9
+81
+189
+114
+hh-tech-improve?
+hh-tech-improve?
+0
+1
+-1000
+
+SLIDER
+262
+10
+432
+43
+drought-possibility
+drought-possibility
+0
+0.3
+0
+0.025
+1
+NIL
+HORIZONTAL
+
+SLIDER
+553
+11
+725
+44
+cost-dynamics
+cost-dynamics
+0
+1
+0
+0.05
+1
+NIL
+HORIZONTAL
+
+MONITOR
+551
+94
+622
+139
+NIL
+drought?
+17
+1
+11
+
+SLIDER
+551
+50
+723
+83
+minimum-flow
+minimum-flow
+150
+350
+350
+25
+1
+NIL
+HORIZONTAL
+
+SWITCH
+191
+51
+330
+84
+agro-learn?
+agro-learn?
+0
+1
+-1000
+
+SWITCH
+194
+91
+389
+124
+agro-tech-improve?
+agro-tech-improve?
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
