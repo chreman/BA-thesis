@@ -54,13 +54,12 @@ globals[
   crop-list
   crop-demand-list
   crop-productivity-list
-  counter
   ; for monitoring
   water-total
   urban-demand
   urban-demand-acc
-  agro-demand-total
-  agro-demand-acc
+  irrigation-demand-total
+  irrigation-demand-acc
   price
   economic-value
   ]
@@ -72,8 +71,8 @@ patches-own[
   rain?
   water
   irrigation-demand?
-  catchment-id
-  irrigation-id
+  patch-catchment-id
+  patch-irrigation-id
   ]
 
 breed[irrigations irrigation]
@@ -85,28 +84,29 @@ breed[rivers river]
 
 irrigations-own[
   id
-  centroids
+  irrigation-centroid
   area
   area-type ; 0 for small, 1 for large
   crop-type
   crop-demand
   crop-productivity
   irrigation-type ; 0 for surface, 1 for pressurized
-  demand
-  utility
-  costs
-  drought-memory
+  irrigation-demand
+  irrigation-utility
+  irrigation-costs
+  irrigation-drought-history
   ]
 
 households-own[
   population
   income
-  demand
-  demand-acc
-  demand-pc
-  demand-agg
-  costs
-  cost-history
+  hh-demand
+  hh-demand-acc
+  hh-demand-pc
+  hh-demand-agg
+  hh-costs
+  hh-cost-history
+  counter
   D1
   D2
   D3
@@ -116,21 +116,21 @@ households-own[
   CHW
   AG20
   AG60
-  utility
+  hh-utility
   tech-factor ; 0 for low, 0.1 for high efficiency
   ]
 
 water-utilities-own[
-  cash
-  demand
-  id
+  wu-cash
+  wu-demand
+  wu-id
   ]
 
 catchments-own[
-  id
-  centroids
-  area
-  level
+  catchment-id
+  catchment-centroid
+  catchment-area
+  catchment-level
   ]
 
 rivers-own[
@@ -234,9 +234,7 @@ to setup-agriculture
     set crop-type item cropr crop-list
     set crop-demand item cropr crop-demand-list
     set crop-productivity item cropr crop-productivity-list
-    let typer random 2
-    set drought-memory 0
-    if (typer = 1)[set irrigation-type 1]
+    set irrigation-type 0
   ]]
   set irrigated patches gis:intersecting irrigation-area
   let irrigation-list gis:feature-list-of irrigation-area
@@ -245,8 +243,8 @@ to setup-agriculture
     let registro gis:property-value ? "registro"
     let contained patches gis:intersecting gis:find-one-feature irrigation-area "registro" word registro ""
     ask contained[
-      set irrigation-id gis:property-value ? "registro"
-      set pcolor round (62 + irrigation-id / 4500)
+      set patch-irrigation-id gis:property-value ? "registro"
+      set pcolor round (62 + patch-irrigation-id / 4500)
     ]
   ]
 end
@@ -270,7 +268,8 @@ to setup-households
     set xcor item 0 location
     set ycor item 1 location
     set size 1
-    set population gis:property-value ? "pobla_06" / 1000
+    set counter random 51
+    set population gis:property-value ? "pobla_06" / 100
     set D1 0
     set D2 0
     set D3 0
@@ -297,8 +296,10 @@ to setup-households
     let AGr random-float 1 * 100
     if (AGr < 12.19) [set AG20 1]
     if (AGr > 62.8) [set AG60 1]
-    set cost-history [80 70 80 90]
-    set demand hh-size * 100 * 7 / 1000
+    set hh-costs 70
+    set hh-cost-history [80 70 80 90]
+    set hh-demand hh-size * 100 * 7 / 1000
+    set hh-demand-acc hh-demand * counter / 4
     let techr random-float 1
     ifelse (techr > 0.8)[
     set tech-factor 1.1][
@@ -332,7 +333,7 @@ to setup-catchments
     let cueche-id gis:property-value ? "cueche_"
     let contained patches gis:intersecting gis:find-one-feature catchments-area "cueche_" word cueche-id ""
     ask contained[
-      set catchment-id gis:property-value ? "cueche_"
+      set patch-catchment-id gis:property-value ? "cueche_"
       set pcolor 35
     ]
   ]
@@ -344,9 +345,9 @@ to setup-catchments
     set xcor item 0 location
     set ycor item 1 location
     set size 1
-    set id gis:property-value ? "cueche_"
-    set area gis:property-value ? "area"
-    set level gis:property-value ? "level"
+    set catchment-id gis:property-value ? "cueche_"
+    set catchment-area gis:property-value ? "area"
+    set catchment-level gis:property-value ? "level"
   ]]
 end
 
@@ -406,8 +407,8 @@ to go
   supply
   if (hh-learning?) [hh-learn]
   if (hh-tech-improve?) [hh-tech-improve]
-  if (agro-learn?) [agro-learn]
-  if (agro-tech-improve?) [agro-tech-improve]
+  if (irrigation-learn?) [irrigation-learn]
+  if (irrigation-tech-improve?) [irrigation-tech-improve]
   time
   tick
 end
@@ -419,7 +420,6 @@ to time
   if (week = 52)[
     set week 0
     set year year + 1
-    ifelse (random-float 1 > drought-possibility)[set drought? FALSE][set drought? TRUE]
   ]
 end
 
@@ -433,6 +433,7 @@ to environment
 ;________________________________________________________________________________
 
   set ebro-discharge item week ebro-discharge-list-mean + item week ebro-discharge-list-mean * ((random-float 0.4) - 0.2) ; Hm³ = mio m³
+  if week = 0 [ifelse (random-float 1 > drought-possibility)[set drought? FALSE][set drought? TRUE]]
   if drought? = TRUE [set ebro-discharge ebro-discharge * ((random-float 0.1) + 0.5)]
   let t1 item week temperature-list
   let t2 item week temperature-list / 4
@@ -444,13 +445,13 @@ end
 
 
 to aggregate
-  set urban-demand-acc urban-demand-acc + sum [demand-agg] of households / 1000000; Hm³
-  set agro-demand-acc agro-demand-acc + sum [demand] of irrigations / 1000000 ; Hm³
-  set urban-demand (mean [demand-pc] of households * sum [population] of households) / 1000000; m³
-  set agro-demand-total sum [demand] of irrigations / 1000000 ; m³
-  set price sum [costs] of households / sum [demand] of households / 7 ; this function is not a scientific model! just for demonstration purposes
+  set urban-demand-acc urban-demand-acc + sum [hh-demand-agg] of households / 1000000; Hm³
+  set irrigation-demand-acc irrigation-demand-acc + sum [irrigation-demand] of irrigations / 1000000 ; Hm³
+  set urban-demand (mean [hh-demand-pc] of households * sum [population] of households) / 1000000; Hm³
+  set irrigation-demand-total sum [irrigation-demand] of irrigations / 1000000 ; Hm³
+  set price sum [hh-costs] of households / sum [hh-demand] of households / 7 ; this function is not a scientific model! just for demonstration purposes
   set economic-value urban-demand * price
-  if (week = 51)[set urban-demand-acc 0 set agro-demand-acc 0]
+  if (week = 51)[set urban-demand-acc 0 set irrigation-demand-acc 0]
 end
 
 
@@ -466,7 +467,7 @@ to supply
   if (availiable-water < 0) and (storage > 0)[
     set storage storage + availiable-water
     set availiable-water 0]
-  set storage storage - urban-demand - agro-demand-total
+  set storage storage - urban-demand - irrigation-demand-total
 end
 
 
@@ -491,11 +492,30 @@ to household-demand-function
 ;________________________________________________________________________________
 
   ask households[
-  let deit-2 item 1 cost-history
-  let deit-4 item 3 cost-history
-  if (deit-2 < 1)[set deit-2 (item 0 cost-history + item 2 cost-history) / 2 ]
-  if (deit-4 < 1)[set deit-4 mean cost-history]
-  set demand e ^ (
+  if (counter = 13) or (counter = 26) or (counter = 39) or (counter = 52)[
+    if (hh-demand-acc / 13 / 7 <= 0.200)[
+      set hh-costs hh-demand-acc * item 0 price-list]
+    if (hh-demand-acc / 13 / 7 > 0.200) and (hh-demand-acc / 13 / 7 <= 0.616)[
+      set hh-costs hh-demand-acc * item 1 price-list]
+    if (hh-demand-acc / 13 / 7 > 0.616)[
+      set hh-costs hh-demand-acc * item 2 price-list]
+;  set costs costs + costs * cost-dynamics * year
+  set hh-cost-history replace-item 3 hh-cost-history item 2 hh-cost-history
+  set hh-cost-history replace-item 2 hh-cost-history item 1 hh-cost-history
+  set hh-cost-history replace-item 1 hh-cost-history item 0 hh-cost-history
+  set hh-cost-history replace-item 0 hh-cost-history hh-costs
+  set hh-demand-acc 0
+  set counter 0]]
+  
+  ask households[
+    set counter counter + 1]
+  
+  ask households[
+  let deit-2 item 1 hh-cost-history
+  let deit-4 item 3 hh-cost-history
+;  if (deit-2 < 1)[set deit-2 mean hh-cost-history]
+;  if (deit-4 < 1)[set deit-4 mean hh-cost-history]
+  set hh-demand e ^ (
     item 0 price-factors + 
     item 1 price-factors * deit-2 + 
     item 2 price-factors * D1 * deit-2 + 
@@ -507,28 +527,12 @@ to household-demand-function
     item 8 price-factors * W + 
     item 9 price-factors * CHW + 
     item 10 price-factors * AG20 + 
-    item 11 price-factors * AG60 + 
-    (random-float 0.5) - 0.25)
-  set demand demand * 7 / tech-factor; m³ / week
-  set demand-pc demand / hh-size ; m³ / week
-  set demand-acc demand-acc + demand ; m³
-  set demand-agg demand-pc * population ; m³
-  if (counter = 13)[
-    if (demand-acc / 13 / 7 <= 0.200)[
-      set costs demand-acc * item 0 price-list]
-    if (demand-acc / 13 / 7 > 0.200) and (demand-acc / 13 / 7 <= 0.616)[
-      set costs demand-acc * item 1 price-list]
-    if (demand-acc / 13 / 7 > 0.616)[
-      set costs demand-acc * item 2 price-list]
-  set costs costs + costs * cost-dynamics * year
-  set cost-history replace-item 3 cost-history item 2 cost-history
-  set cost-history replace-item 2 cost-history item 1 cost-history
-  set cost-history replace-item 1 cost-history item 0 cost-history
-  set cost-history replace-item 0 cost-history costs
-  set counter 0
-  set demand-acc 0]
-  set counter counter + 1
-  set utility demand-pc * hh-size * tech-factor * tech-factor
+    item 11 price-factors * AG60)
+  set hh-demand hh-demand * 7 / tech-factor; m³ / week
+  set hh-demand-pc hh-demand / hh-size ; m³ / week
+  set hh-demand-acc hh-demand-acc + hh-demand ; m³
+  set hh-demand-agg hh-demand-pc * population ; m³
+  set hh-utility hh-demand-pc * hh-size * tech-factor * tech-factor
   ]
 end
 
@@ -545,28 +549,37 @@ to agriculture-demand-function
   ifelse (week > 12) and (week <= 40)[
     ask irrigated[
       set irrigation-demand? 1
-      set pcolor round (62 + irrigation-id / 4500)]][
+      set pcolor round (62 + patch-irrigation-id / 4500)]][
     ask irrigated[
       set irrigation-demand? 0
       set pcolor 35]
       ]
    ask irrigations[
-     set demand crop-demand * area * 0.8 * irrigation-demand? ; m³/10.000 m² * m ² = m³
-     set costs crop-demand * price * 0.25 * area
-     set utility ln crop-productivity * (1 - drought-memory * 0.2) ^ 5 / crop-demand * 1000
+     set irrigation-demand crop-demand * ( 1 - 0.2 * irrigation-type) * area * 0.8 * irrigation-demand?; m³/10.000 m² * m ² = m³
+     set irrigation-costs crop-demand * (1 - 0.2 * irrigation-type) * price * 0.25 * area
+     set irrigation-utility (crop-productivity * (1 - irrigation-drought-history * 0.2) ^ 5 / crop-demand * (1 - 0.2 * irrigation-type) * 1000) * (1 + (0.2 * irrigation-type))
    ]
 end
+
+
+
+
+
+
+
+
+
 
 to hh-tech-improve
   if week mod 12 = 4 and year > 2[
   ask n-of 300 households[
-    let own-utility utility
-    let own-costs mean cost-history
-    let peers households with [costs < own-costs]
-    set peers peers with [utility > own-utility]
+    let own-utility hh-utility
+    let own-costs mean hh-cost-history
+    let peers households with [hh-costs < own-costs]
+    set peers peers with [hh-utility > own-utility]
     if any? peers[
-      let peers-tech mean [tech-factor] of peers
-      if (peers-tech > 1.05)[
+      let peers-tech median [tech-factor] of peers
+      if (peers-tech >= 1.05)[
         set tech-factor 1.1]
     ]]
   ]
@@ -575,10 +588,10 @@ end
 to hh-learn
   if week mod 12 = 4 and year > 2[
   ask n-of 36 households[
-    let own-utility utility
-    let own-costs mean cost-history
-    let peers households with [costs < own-costs]
-    set peers peers with [utility > own-utility]
+    let own-utility hh-utility
+    let own-costs mean hh-cost-history
+    let peers households with [hh-costs < own-costs]
+    set peers peers with [hh-utility > own-utility]
     if any? peers[
       let peers-size round mean [hh-size] of peers
       if (peers-size - hh-size <= 1)[
@@ -588,21 +601,21 @@ to hh-learn
   ]
 end
 
-to agro-learn
+to irrigation-learn
   if (week = 10)[ ask irrigations[
       ifelse (drought? = TRUE)[
-        set drought-memory drought-memory + 1][
-        set drought-memory drought-memory - 1]
-      if (drought-memory < 1) [set drought-memory 0]
-      if (drought-memory > 5) [set drought-memory 5]
+        set irrigation-drought-history irrigation-drought-history + 1][
+        set irrigation-drought-history irrigation-drought-history - 1]
+      if (irrigation-drought-history < 1) [set irrigation-drought-history 0]
+      if (irrigation-drought-history > 5) [set irrigation-drought-history 5]
   ]]
   if (week = 11)[
     ask n-of 36 irrigations[
       let strategies [0 0 0 0]
-      set strategies replace-item 0 strategies (item 0 crop-productivity-list / item 0 crop-demand-list * (1 - drought-memory) ^ 5)
-      set strategies replace-item 1 strategies (item 1 crop-productivity-list / item 1 crop-demand-list * (1 - drought-memory) ^ 5)
-      set strategies replace-item 2 strategies (item 2 crop-productivity-list / item 2 crop-demand-list * (1 - drought-memory) ^ 5)
-      set strategies replace-item 3 strategies (item 3 crop-productivity-list / item 3 crop-demand-list * (1 - drought-memory) ^ 5)
+      set strategies replace-item 0 strategies (item 0 crop-productivity-list / item 0 crop-demand-list * (1.2 - irrigation-drought-history) ^ 5 * (1 + (0.2 * irrigation-type)))
+      set strategies replace-item 1 strategies (item 1 crop-productivity-list / item 1 crop-demand-list * (1.2 - irrigation-drought-history) ^ 5 * (1 + (0.2 * irrigation-type)))
+      set strategies replace-item 2 strategies (item 2 crop-productivity-list / item 2 crop-demand-list * (1.2 - irrigation-drought-history) ^ 5 * (1 + (0.2 * irrigation-type)))
+      set strategies replace-item 3 strategies (item 3 crop-productivity-list / item 3 crop-demand-list * (1.2 - irrigation-drought-history) ^ 5 * (1 + (0.2 * irrigation-type)))
       let max-value max strategies
       let index position max-value strategies
       set crop-type item index crop-list
@@ -611,7 +624,10 @@ to agro-learn
     ]]
 end
 
-to agro-tech-improve
+to irrigation-tech-improve
+  if (week = 10)[ ask n-of 36 irrigations[
+      set irrigation-type 1
+  ]]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -692,8 +708,8 @@ true
 "" ""
 PENS
 "urban demand" 1.0 0 -4079321 true "" "plot urban-demand"
-"overall demand" 1.0 0 -2674135 true "" "plot urban-demand + agro-demand-total"
-"agric. demand" 1.0 0 -13840069 true "" "plot agro-demand-total"
+"overall demand" 1.0 0 -2674135 true "" "plot urban-demand + irrigation-demand-total"
+"agric. demand" 1.0 0 -13840069 true "" "plot irrigation-demand-total"
 "availiable water" 1.0 0 -13345367 true "" "plot availiable-water"
 "ebro minimum flow" 1.0 0 -16777216 true "" "plot minimum-flow * 3600 * 24 * 7 / 1000000"
 "ebro discharge" 1.0 0 -11221820 true "" "plot ebro-discharge"
@@ -737,7 +753,7 @@ PLOT
 389
 1157
 509
-price
+costs
 NIL
 NIL
 0.0
@@ -748,7 +764,7 @@ true
 false
 "" ""
 PENS
-"price" 1.0 0 -2674135 true "" "plot price"
+"price" 1.0 0 -2674135 true "" "plot mean [hh-costs] of households"
 
 MONITOR
 808
@@ -767,7 +783,7 @@ MONITOR
 1135
 55
 urban demand
-sum [demand] of households
+sum [hh-demand] of households
 17
 1
 11
@@ -797,7 +813,7 @@ MONITOR
 1030
 102
 demand per hh / day
-sum [demand] of households / count households / 7
+sum [hh-demand] of households / count households / 7
 17
 1
 11
@@ -808,7 +824,7 @@ MONITOR
 1024
 149
 avg. costs / quarter
-sum [costs] of households / 1000
+sum [hh-costs] of households / 1000
 17
 1
 11
@@ -819,7 +835,7 @@ MONITOR
 991
 55
 demand p.c.
-sum [demand-pc] of households / sum [hh-size] of households / 7
+sum [hh-demand-pc] of households / sum [hh-size] of households / 7
 17
 1
 11
@@ -835,12 +851,16 @@ NIL
 0.0
 10.0
 0.0
-10.0
+0.1
 true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot (sum [demand-pc] of households with [demand-pc > 1] / sum [hh-size] of households / 7) * 1000"
+"default" 1.0 0 -16777216 true "" ";plot (mean [hh-demand / 7] of households with [hh-size = 1])"
+"pen-1" 1.0 0 -7500403 true "" ";plot (mean [hh-demand / 7] of households with [hh-size = 2])"
+"pen-2" 1.0 0 -2674135 true "" ";plot (mean [hh-demand / 7] of households with [hh-size = 3])"
+"pen-3" 1.0 0 -955883 true "" ";plot (mean [hh-demand / 7] of households with [hh-size >= 4])"
+"mean demand p.c." 1.0 0 -6459832 true "" "plot (sum [hh-demand / 7 * 1000] of households / sum [hh-size] of households)"
 
 PLOT
 1437
@@ -851,14 +871,14 @@ household demand / day
 NIL
 NIL
 0.0
-10.0
+1000.0
 0.0
 50.0
 false
 false
 "" ""
 PENS
-"default" 0.1 1 -16777216 true "" "histogram [demand / 7] of households with [demand > 1]"
+"default" 0.1 1 -16777216 true "" "histogram [hh-demand / 7] of households"
 
 PLOT
 1274
@@ -876,7 +896,7 @@ false
 false
 "" ""
 PENS
-"default" 1.0 1 -16777216 true "" "histogram [costs] of households with [costs > 1]"
+"default" 1.0 1 -16777216 true "" "histogram [hh-costs] of households"
 
 BUTTON
 87
@@ -911,10 +931,10 @@ false
 false
 "" ""
 PENS
-"default" 1.0 1 -16777216 true "" "histogram [item 0 cost-history] of households with [costs > 1]"
-"pen-1" 1.0 1 -7500403 true "" "histogram [item 1 cost-history] of households with [costs > 1]"
-"pen-2" 1.0 1 -2674135 true "" "histogram [item 2 cost-history] of households with [costs > 1]"
-"pen-3" 1.0 1 -955883 true "" "histogram [item 3 cost-history] of households with [costs > 1]"
+"0" 1.0 1 -16777216 true "" "histogram [item 0 hh-cost-history] of households"
+"1" 1.0 1 -7500403 true "" "histogram [item 1 hh-cost-history] of households"
+"2" 1.0 1 -2674135 true "" "histogram [item 2 hh-cost-history] of households"
+"3" 1.0 1 -955883 true "" "histogram [item 3 hh-cost-history] of households"
 
 PLOT
 751
@@ -932,7 +952,7 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot mean [utility] of households"
+"default" 1.0 0 -16777216 true "" "plot mean [hh-utility] of households"
 
 PLOT
 760
@@ -950,7 +970,7 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot sum [demand / 7] of irrigations / sum [area] of irrigations"
+"default" 1.0 0 -16777216 true "" "plot sum [irrigation-demand / 7] of irrigations / sum [area] of irrigations"
 
 PLOT
 1437
@@ -961,14 +981,14 @@ demand p.c. / day
 NIL
 NIL
 0.0
-10.0
+300.0
 0.0
 30.0
 false
 false
 "" ""
 PENS
-"default" 0.1 1 -16777216 true "" "histogram [demand-pc / 7] of households with [demand > 1]"
+"default" 0.1 1 -16777216 true "" "histogram [hh-demand-pc / 7] of households"
 
 PLOT
 1228
@@ -986,15 +1006,15 @@ true
 false
 "" ""
 PENS
-"default" 10000.0 1 -16777216 true "" "histogram [demand] of irrigations"
+"default" 10000.0 1 -16777216 true "" "histogram [irrigation-demand] of irrigations"
 
 MONITOR
 1391
 497
-1631
+1660
 542
 NIL
-mean [demand] of irrigations
+mean [irrigation-demand] of irrigations
 17
 1
 11
@@ -1062,7 +1082,7 @@ false
 false
 "" ""
 PENS
-"default" 1.0 1 -16777216 true "" "histogram [utility] of households with [utility > 1]"
+"default" 1.0 1 -16777216 true "" "histogram [hh-utility] of households"
 
 PLOT
 1440
@@ -1080,15 +1100,15 @@ true
 false
 "" ""
 PENS
-"default" 0.2 1 -16777216 true "" "histogram [utility] of irrigations with [utility > 1]"
+"default" 0.2 1 -16777216 true "" "histogram [irrigation-utility] of irrigations"
 
 MONITOR
 1033
 57
-1181
+1196
 102
 NIL
-agro-demand-total
+irrigation-demand-total
 17
 1
 11
@@ -1141,7 +1161,7 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot mean [utility] of irrigations"
+"default" 1.0 0 -16777216 true "" "plot mean [irrigation-utility] of irrigations"
 
 PLOT
 1599
@@ -1179,7 +1199,7 @@ SWITCH
 79
 hh-learning?
 hh-learning?
-0
+1
 1
 -1000
 
@@ -1190,7 +1210,7 @@ SWITCH
 114
 hh-tech-improve?
 hh-tech-improve?
-0
+1
 1
 -1000
 
@@ -1244,7 +1264,7 @@ minimum-flow
 minimum-flow
 150
 350
-350
+300
 25
 1
 NIL
@@ -1253,24 +1273,78 @@ HORIZONTAL
 SWITCH
 191
 51
-330
+361
 84
-agro-learn?
-agro-learn?
-0
+irrigation-learn?
+irrigation-learn?
+1
 1
 -1000
 
 SWITCH
 194
 91
-389
+420
 124
-agro-tech-improve?
-agro-tech-improve?
+irrigation-tech-improve?
+irrigation-tech-improve?
 1
 1
 -1000
+
+PLOT
+1644
+542
+1804
+662
+mean agric. tech-factor 
+NIL
+NIL
+0.0
+10.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot mean [irrigation-type] of irrigations"
+
+PLOT
+1273
+253
+1433
+373
+demand accumulated
+NIL
+NIL
+0.0
+50.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 1 -16777216 true "" "histogram [hh-demand-acc] of households"
+
+PLOT
+1391
+374
+1551
+494
+counter
+NIL
+NIL
+0.0
+52.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 1 -16777216 true "" "histogram [counter] of households"
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1619,6 +1693,108 @@ NetLogo 5.0.3
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
+<experiments>
+  <experiment name="baseline scenarios" repetitions="5" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="1040"/>
+    <metric>sum [demand-pc] of households with [demand-pc &gt; 1] / sum [hh-size] of households / 7</metric>
+    <metric>sum [demand / 7] of irrigations / sum [area] of irrigations</metric>
+    <metric>mean [hh-size] of households</metric>
+    <metric>mean [tech-factor] of households</metric>
+    <metric>mean [utility] of households with [utility &gt; 1]</metric>
+    <metric>mean [irrigation-type] of irrigations</metric>
+    <metric>mean [utility] of irrigations</metric>
+    <metric>count irrigations with [crop-type = 0]</metric>
+    <metric>count irrigations with [crop-type = 1]</metric>
+    <metric>count irrigations with [crop-type = 2]</metric>
+    <metric>count irrigations with [crop-type = 3]</metric>
+    <metric>count households with [hh-size = 1]</metric>
+    <metric>count households with [hh-size = 2]</metric>
+    <metric>count households with [hh-size = 3]</metric>
+    <metric>count households with [hh-size &gt;= 4]</metric>
+    <metric>round storage</metric>
+    <enumeratedValueSet variable="minimum-flow">
+      <value value="150"/>
+      <value value="50"/>
+      <value value="350"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="cost-dynamics">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="hh-learning?">
+      <value value="false"/>
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="drought-possibility">
+      <value value="0"/>
+      <value value="0.05"/>
+      <value value="0.3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="hh-tech-improve?">
+      <value value="false"/>
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="agro-learn?">
+      <value value="false"/>
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="agro-tech-improve?">
+      <value value="false"/>
+      <value value="true"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="baselines" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="1144"/>
+    <metric>sum [demand-pc] of households with [demand-pc &gt; 1] / sum [hh-size] of households / 7</metric>
+    <metric>sum [demand / 7] of irrigations / sum [area] of irrigations</metric>
+    <metric>mean [hh-size] of households</metric>
+    <metric>mean [tech-factor] of households</metric>
+    <metric>mean [utility] of households with [utility &gt; 1]</metric>
+    <metric>mean [irrigation-type] of irrigations</metric>
+    <metric>mean [utility] of irrigations</metric>
+    <metric>count irrigations with [crop-type = 0]</metric>
+    <metric>count irrigations with [crop-type = 1]</metric>
+    <metric>count irrigations with [crop-type = 2]</metric>
+    <metric>count irrigations with [crop-type = 3]</metric>
+    <metric>count households with [hh-size = 1]</metric>
+    <metric>count households with [hh-size = 2]</metric>
+    <metric>count households with [hh-size = 3]</metric>
+    <metric>count households with [hh-size &gt;= 4]</metric>
+    <metric>round storage</metric>
+    <enumeratedValueSet variable="minimum-flow">
+      <value value="150"/>
+      <value value="50"/>
+      <value value="350"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="cost-dynamics">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="hh-learning?">
+      <value value="false"/>
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="drought-possibility">
+      <value value="0"/>
+      <value value="0.05"/>
+      <value value="0.3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="hh-tech-improve?">
+      <value value="false"/>
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="agro-learn?">
+      <value value="false"/>
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="agro-tech-improve?">
+      <value value="false"/>
+      <value value="true"/>
+    </enumeratedValueSet>
+  </experiment>
+</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default
