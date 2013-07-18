@@ -1,0 +1,53 @@
+This is BibTeX, Version 0.99d (TeX Live 2012/Debian)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: BA Kittel.aux
+The style file: apalike.bst
+Database file #1: sources.bib.bib
+Repeated entry---line 817 of file sources.bib.bib
+ : @article{Varela-Ortega1998
+ :                           ,
+I'm skipping whatever remains of this entry
+Warning--empty booktitle in Angus2009
+Warning--there's a number but no volume in Hardin1968
+You've used 25 entries,
+            1935 wiz_defined-function locations,
+            645 strings with 8536 characters,
+and the built_in function-call counts, 10220 in all, are:
+= -- 966
+> -- 455
+< -- 10
++ -- 166
+- -- 154
+* -- 908
+:= -- 1801
+add.period$ -- 74
+call.type$ -- 25
+change.case$ -- 201
+chr.to.int$ -- 25
+cite$ -- 27
+duplicate$ -- 358
+empty$ -- 709
+format.name$ -- 183
+if$ -- 1991
+int.to.chr$ -- 1
+int.to.str$ -- 0
+missing$ -- 22
+newline$ -- 127
+num.names$ -- 77
+pop$ -- 164
+preamble$ -- 1
+purify$ -- 202
+quote$ -- 0
+skip$ -- 265
+stack$ -- 0
+substring$ -- 735
+swap$ -- 32
+text.length$ -- 1
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 146
+warning$ -- 2
+while$ -- 71
+width$ -- 0
+write$ -- 321
+(There was 1 error message)
