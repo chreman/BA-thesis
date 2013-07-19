@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.4-1.40.13 (TeX Live 2012/Debian) (format=latex 2013.3.8)  18 JUL 2013 23:14
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (TeX Live 2012/Debian) (format=latex 2013.3.8)  19 JUL 2013 16:42
 entering extended mode
  \write18 enabled.
  Source specials enabled.
@@ -543,24 +543,6 @@ LaTeX Font Info:    Try loading font information for U+msb on input line 31.
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2009/06/22 v3.00 AMS symbols B
 )
-Overfull \hbox (11.6962pt too wide) in paragraph at lines 35--38
-\OT1/cmr/m/n/10 Bere-ich der Wasserver-sorgung die Schl[]usselkom-po-nen-ten (A
-nge-bot, Nach-
- []
-
-
-Overfull \hbox (6.28181pt too wide) in paragraph at lines 35--38
-\OT1/cmr/m/n/10 frage, In-fras-truk-tur, Umwel-te-in-fl[]usse) darzustellen, Ve
-r-hal-ten auf Mikro-
- []
-
-
-Overfull \hbox (0.55621pt too wide) in paragraph at lines 35--38
-\OT1/cmr/m/n/10 ebene simulieren und auf Makroebene langfristige Ten-den-zen er
-kennbar
- []
-
-
 Overfull \hbox (4.19513pt too wide) in paragraph at lines 35--38
 \OT1/cmr/m/n/10 (Haushalte und Bew[]asserungs-land-wirtschaften) ver-schiedene 
 Hand-lung-
@@ -575,97 +557,131 @@ Overfull \hbox (4.61287pt too wide) in paragraph at lines 35--38
 [1
 
 ]
+Overfull \hbox (6.88745pt too wide) in paragraph at lines 46--50
+\OT1/cmr/m/n/10.95 wirtschaft und pri-vat-en Ver-braucherIn-nen, punk-tuelle Ve
+r-schmutzungsquellen
+ []
+
+
+Overfull \hbox (2.69382pt too wide) in paragraph at lines 46--50
+\OT1/cmr/m/n/10.95 Flusssys-teme sind im-mer wieder Ausl[]oser f[]ur diplo-ma-t
+is-che Ver-stim-mungen[]. 
+ []
+
+
 Underfull \hbox (badness 10000) in paragraph at lines 46--50
 
  []
 
 [2]
-Overfull \hbox (28.21567pt too wide) in paragraph at lines 59--61
+Underfull \hbox (badness 10000) in paragraph at lines 60--62
+
+ []
+
+[3]
+Overfull \hbox (28.21567pt too wide) in paragraph at lines 71--72
 []\OT1/cmr/m/n/10.95 Die Wasserver-sorgung ste-ht zuk[]unftig vor gro^^Yen Her-
 aus-forderun-gen. Zunehmende
  []
 
 
-Overfull \hbox (9.29158pt too wide) in paragraph at lines 59--61
+Overfull \hbox (9.29158pt too wide) in paragraph at lines 71--72
 \OT1/cmr/m/n/10.95 Umweltvolatilit[]at durch Kli-mawan-del, zunehmende Ur-ban-i
 sierung, Wasserver-
  []
 
 
-Overfull \hbox (7.9064pt too wide) in paragraph at lines 59--61
+Overfull \hbox (7.9064pt too wide) in paragraph at lines 71--72
 \OT1/cmr/m/n/10.95 schmutzung durch In-dus-trie und in-ten-sive Land-wirtschaft
 , sink-ende Gew[]asser-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 59--61
+Underfull \hbox (badness 10000) in paragraph at lines 71--72
 
  []
 
 
-Overfull \hbox (8.10417pt too wide) in paragraph at lines 64--66
-\OT1/cmr/m/n/10.95 hen-den Wasserk-nap-pheit-en, sowie m[]oglich-er Steuerungs-
-ma^^Y-nah-men und ihren
- []
+Underfull \hbox (badness 10000) in paragraph at lines 73--74
 
-[3]
-Overfull \hbox (0.66612pt too wide) in paragraph at lines 77--82
-\OT1/cmr/m/n/10.95 Olmstead hebt bei der Gestal-tung ein-er Nach-frage-funk-tio
-n des Haushaltssek-
  []
 
 
-Overfull \hbox (10.97977pt too wide) in paragraph at lines 77--82
-\OT1/cmr/m/n/10.95 tor her-vor, dass Gren-zpreise, Einkom-men und Vari-ablen f[
-]ur Haushalt-spr[]aferen-
+Underfull \hbox (badness 10000) in paragraph at lines 75--77
+
  []
 
 
-Overfull \hbox (7.5019pt too wide) in paragraph at lines 77--82
-\OT1/cmr/m/n/10.95 den. Olm-stead find-et in ein-er Lit-er-atur-re-view auch hi
--er ten-den-ziell Preisinelas-
+Overfull \hbox (17.18478pt too wide) in paragraph at lines 78--80
+\OT1/cmr/m/n/10.95 ein-er Nach-frage-funk-tion des Haushaltssek-tors her-vor, d
+ass Gren-zpreise, Einkom-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 78--80
+
  []
 
 [4]
-Overfull \hbox (13.09245pt too wide) in paragraph at lines 86--92
-\OT1/cmr/m/n/10.95 Haushal-ten, sowie das Ver-brauchsver-hal-ten von Bew[]asser
-ungs-land-wirtschaften.
+Underfull \hbox (badness 10000) in paragraph at lines 82--83
+
  []
 
 
-Overfull \hbox (10.51306pt too wide) in paragraph at lines 86--92
-\OT1/cmr/m/n/10.95 nis-chen Bew[]asserungssys-tems Auswirkun-gen auf den Wasser
-ver-brauch. Varela-
+Overfull \hbox (0.80415pt too wide) in paragraph at lines 84--85
+\OT1/cmr/m/n/10.95 hen-den Wasserk-nap-pheit-en, sowie m[]oglich-er Steuerungs-
+ma^^Y-nah-men und ihr-
  []
 
 [5]
-Underfull \hbox (badness 10000) in paragraph at lines 96--97
+Underfull \hbox (badness 10000) in paragraph at lines 87--89
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 90--92
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 93--95
 
  []
 
 [6]
-Underfull \hbox (badness 10000) in paragraph at lines 101--102
-
+Overfull \hbox (4.38918pt too wide) in paragraph at lines 96--97
+[][]\OT1/cmr/m/n/10.95 Die jew-eili-gen Nutzen-funk-tio-nen wer-den im Ab-schni
+tt 3[] genauer erl[]autert.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 103--105
+Underfull \hbox (badness 10000) in paragraph at lines 101--103
 
- []
-
-
-Overfull \hbox (6.67036pt too wide) in paragraph at lines 106--107
-[][]\OT1/cmr/m/n/10.95 Im Ebrobeck-en wird in-s-ge-samt eine Fl[]ache von 784.0
-00 ha Land bew[]assert,
  []
 
 [7]
-Underfull \hbox (badness 10000) in paragraph at lines 109--110
+Underfull \hbox (badness 10000) in paragraph at lines 117--118
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 111--112
+Overfull \hbox (15.73744pt too wide) in paragraph at lines 119--121
+\OT1/cmr/m/n/10.95 hin-aus wer-den bish-erige tech-nis-che Verbesserun-gen des 
+Wasserange-bots (Kan[]ale
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 119--121
+
+ []
+
+[8]
+Underfull \hbox (badness 10000) in paragraph at lines 125--126
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 127--128
 
  []
 
@@ -676,51 +692,69 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.113 \newline
+l.131 \newline
               
 Your command was ignored.
 Type  I <command> <return>  to replace it with another command,
 or  <return>  to continue without it.
 
 
-Overfull \hbox (41.98656pt too wide) in paragraph at lines 114--134
+Overfull \hbox (46.54912pt too wide) in paragraph at lines 132--153
 [][][] 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 114--134
+Underfull \hbox (badness 10000) in paragraph at lines 132--153
 
  []
 
-
-Overfull \hbox (1.88365pt too wide) in paragraph at lines 135--136
+[9]
+Overfull \hbox (1.88365pt too wide) in paragraph at lines 154--155
  \OT1/cmr/bx/n/10.95 Land-wirtschaften[] []\OT1/cmr/m/n/10.95 haben als Be-stan
 ds-gr[]o^^Yen Gren-zpro-duk-tiv-it[]at pro Ku-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 135--136
+Underfull \hbox (badness 10000) in paragraph at lines 154--155
 
  []
 
-[8]
-Overfull \hbox (29.7579pt too wide) in paragraph at lines 137--154
+
+Overfull \hbox (29.7579pt too wide) in paragraph at lines 156--173
 [][][] 
  []
 
-
-Overfull \hbox (3.91989pt too wide) in paragraph at lines 156--158
+[10]
+Overfull \hbox (3.91989pt too wide) in paragraph at lines 175--176
  \OT1/cmr/bx/n/10.95 Umwelt-vari-ablen[] []\OT1/cmr/m/n/10.95 sind Tem-per-atur
  sowie gef[]uhrte Wasser-menge im Fluss-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 156--158
+Underfull \hbox (badness 10000) in paragraph at lines 175--176
 
  []
 
-[9]
-Underfull \hbox (badness 10000) in paragraph at lines 165--166
+
+! LaTeX Error: There's no line here to end.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.188 \newline
+              
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 189--190
+
+ []
+
+[11]
+Underfull \hbox (badness 10000) in paragraph at lines 196--197
 
  []
 
@@ -729,147 +763,262 @@ File: ./world.eps Graphic file (type eps)
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[10] [11]
-Underfull \hbox (badness 10000) in paragraph at lines 190--191
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 197--198
-
- []
-
-
-Overfull \hbox (1.9904pt too wide) in paragraph at lines 222--224
-\OT1/cmr/m/n/10.95 fragev-er-hal-ten im all-ge-meinen f[]ur preisinelastisch ge
-hal-ten wird, zeigen einige
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 222--224
-
- []
-
 [12]
-Overfull \hbox (14.42427pt too wide) in paragraph at lines 236--252
-[][][] 
+Underfull \hbox (badness 10000) in paragraph at lines 219--220
+
  []
 
 [13]
-Underfull \hbox (badness 10000) in paragraph at lines 257--259
+Underfull \hbox (badness 10000) in paragraph at lines 235--236
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 262--262
+Overfull \hbox (9.04588pt too wide) in paragraph at lines 240--241
+[]\OT1/cmr/m/n/10.95 Die Ange-bots-funk-tion berech-net zum einen die physikali
+sch vorhan-dene Menge
+ []
+
+
+Overfull \hbox (7.04472pt too wide) in paragraph at lines 243--253
+[][][] 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 263--263
 [][]\OT1/cmr/m/n/9 http://www.zaragoza.es/contenidos/normativa/ordenanzas-fisca
 les/2013/OF_24-25-
  []
 
 
-Overfull \hbox (7.29402pt too wide) in paragraph at lines 262--263
-\OT1/cmr/m/n/10.95 mod-ell der Stadtver-wal-tung von Saragos-sa nachemp-fun-den
-[]. Haushalte zahlen
+Overfull \hbox (7.96321pt too wide) in paragraph at lines 263--264
+\OT1/cmr/m/n/10.95 Kosten-mod-ell der Stadtver-wal-tung von Saragos-sa nachemp-
+fun-den[]. Haushalte
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 262--263
+Underfull \hbox (badness 10000) in paragraph at lines 263--264
 
  []
 
 [14]
-Underfull \hbox (badness 10000) in paragraph at lines 276--278
+Underfull \hbox (badness 10000) in paragraph at lines 278--279
+
+ []
+
+[15]
+Overfull \hbox (14.42427pt too wide) in paragraph at lines 291--307
+[][][] 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 312--314
 
  []
 
 
-Overfull \hbox (2.06653pt too wide) in paragraph at lines 279--280
+Underfull \hbox (badness 10000) in paragraph at lines 317--318
+
+ []
+
+[16]
+Overfull \hbox (3.02586pt too wide) in paragraph at lines 320--329
+[][][] 
+ []
+
+
+Overfull \hbox (0.3815pt too wide) in paragraph at lines 333--334
+[][]\OT1/cmr/m/n/10.95 Salvador et al. kalkulieren die []okonomis-che Net-to-pr
+o-duk-tiv-it[]at von Wass-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 333--334
+
+ []
+
+
+Overfull \hbox (2.06653pt too wide) in paragraph at lines 335--336
 \OT1/cmr/m/n/10.95 tions-fak-tor zu se-hen, und ist da-her vor allem vom pro-du
 zierten Gut abh[]angig.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 279--280
+Underfull \hbox (badness 10000) in paragraph at lines 335--336
+
+ []
+
+[17]
+Underfull \hbox (badness 10000) in paragraph at lines 350--352
 
  []
 
 
-Overfull \hbox (3.02586pt too wide) in paragraph at lines 292--301
-[][][] 
+Underfull \hbox (badness 10000) in paragraph at lines 356--356
+ []$\OML/cmm/m/it/10.95 s[] \OT1/cmr/m/n/10.95 = [][]|$ 
  []
 
-[15] [16]
 
-LaTeX Warning: Command \ss invalid in math mode on input line 351.
+Overfull \hbox (1.19835pt too wide) in paragraph at lines 362--363
+\OT1/cmr/m/n/10.95 nen nun an-hand der einem Haushalt oder ein-er Land-wirtscha
+ft zur Verf[]ugung
+ []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 355--355
+Underfull \hbox (badness 10000) in paragraph at lines 362--363
+
+ []
+
+
+Overfull \hbox (1.68211pt too wide) in paragraph at lines 364--365
+[][]\OT1/cmr/m/n/10.95 Die Nutzen-funk-tion der Haushalte ist rel-a-tiv ein-fac
+h gehal-ten und berech-
+ []
+
+[18]
+Overfull \hbox (4.18762pt too wide) in paragraph at lines 380--381
+\OT1/cmr/m/n/10.95 Sit-u-a-tion zu max-imieren. Ein-er der ein-fach-sten Wege, 
+wie Lern- und Entschei-
+ []
+
+
+Overfull \hbox (3.63896pt too wide) in paragraph at lines 380--381
+[]\OT1/cmr/m/n/10.95 ubertra-gen wer-den kann. In der Lern-funk-tion (11[]) ver
+-gle-icht sich ein Haushalt
+ []
+
+
+LaTeX Warning: Command \ss invalid in math mode on input line 386.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 390--390
  []$[][]|$ 
  []
 
 
-Overfull \hbox (11.78462pt too wide) in paragraph at lines 362--365
-[]\OT1/cmr/m/n/10.95 Die Entschei-dungs-funk-tion (10[]) der Land-wirtschaften 
-di-ent dazu, den zuk[]unfti-
+Underfull \hbox (badness 10000) in paragraph at lines 393--394
+
+ []
+
+[19]
+Overfull \hbox (2.11206pt too wide) in paragraph at lines 401--403
+\OT1/cmr/m/n/10.95 simuliert, da hi-erf[]ur weit-ere Dat-en hin-sichtlich der K
+om-pet-i-tiv-it[]at von Trock-
+ []
+
+[20]
+Overfull \hbox (0.32355pt too wide) in paragraph at lines 408--409
+\OT1/cmr/m/n/10.95 Zu-s-tand ab-bilden. Jede Kom-bi-na-tion von Pa-ram-e-tern k
+ann mehrfach wieder-
  []
 
 
-Overfull \hbox (24.59836pt too wide) in paragraph at lines 362--365
-\OT1/cmr/m/n/10.95 Preis-punkt, bzw. Wasserverf[]ugbarkeitss-chwelle, ab welch-
-er Trock-en-land-wirtschaft
+! LaTeX Error: There's no line here to end.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.423 \newline
+              
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: There's no line here to end.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.424 \newline
+              
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+Overfull \hbox (2.89378pt too wide) in paragraph at lines 446--447
+\OT1/cmr/m/n/10.95 916.000 Daten-punk-te zu 12 Vari-ablen. Grafik 2[] vi-su-al-
+isiert die Wasserf[]uhrung
  []
 
-[17] [18]
-Overfull \hbox (1.84439pt too wide) in paragraph at lines 375--376
-\OT1/cmr/m/n/10.95 Zu-s-tand ab-bilden. Jede Kom-bi-na-tion von Pa-ram-e-tern w
-urde f[]unf mal wieder-
- []
-
-File: ./demandpc.eps Graphic file (type eps)
-<./demandpc.eps>
+File: ./ebro-wasser-output.eps Graphic file (type eps)
+<./ebro-wasser-output.eps>
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 418.
 
-(/usr/share/texlive/texmf-dist/tex/latex/base/omscmr.fd
+Overfull \hbox (18.1831pt too wide) in paragraph at lines 457--458
+[][]\OT1/cmr/m/n/10.95 Grafik 3[] stellt einen ex-em-plar-ischen Ver-lauf der V
+ari-able pro-Kopf-Verbrauch
+ []
+
+File: ./demandpc.eps Graphic file (type eps)
+<./demandpc.eps> [21]
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 469.
+
+ (/usr/share/texlive/texmf-dist/tex/latex/base/omscmr.fd
 File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10.95> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 418.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 469.
 
-Overfull \hbox (1.00058pt too wide) in paragraph at lines 418--419
+Overfull \hbox (1.00058pt too wide) in paragraph at lines 469--470
 \OT1/cmr/m/n/10.95 Gewohn-heit-en) steigen und er-schw-eren die Um-set-zung von
  Wasserspar-
  []
 
-[19]
-Overfull \hbox (5.17995pt too wide) in paragraph at lines 423--424
+[22]
+Underfull \hbox (badness 10000) in paragraph at lines 472--473
+
+ []
+
+
+Overfull \hbox (5.17995pt too wide) in paragraph at lines 474--475
 [][]\OT1/cmr/m/n/10.95 Bei den Land-wirtschaften gibt es ein in-ter-es-santes P
 h[]anomen zu beobacht-
  []
 
-[20]
 File: ./crop-types.eps Graphic file (type eps)
- <./crop-types.eps>
-Overfull \hbox (2.44374pt too wide) in paragraph at lines 440--441
-[][]\OT1/cmr/m/n/10.95 F[]ur zuk[]unftige Mod-el-len-twick-lung ist eben-falls 
-erkennbar, dass die gro^^Yen
+<./crop-types.eps>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[23]
+File: ./utility-losses.eps Graphic file (type eps)
+ <./utility-losses.eps>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[24]
+Underfull \hbox (badness 10000) in paragraph at lines 499--500
+
  []
 
+[25] [26] (./BA Kittel.bbl [27]
 
-Underfull \hbox (badness 10000) in paragraph at lines 440--441
+! LaTeX Error: Command \texteuro unavailable in encoding OT1.
 
- []
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.144   resilient waterâ€
+                         “wastewater infrastructures under conditions of water
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
 
-[21] (./BA Kittel.bbl [22] [23]) [24]
+[28]) [29]
 File: ./hh-size-distribution.eps Graphic file (type eps)
  <./hh-size-distribution.eps>
 File: ./wealth-distribution.eps Graphic file (type eps)
-
-<./wealth-distribution.eps>
+ <./wealth-distribution.eps>
 File: ./ebro-wasser.eps Graphic file (type eps)
- <./ebro-wasser.eps>
+
+<./ebro-wasser.eps>
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
@@ -878,18 +1027,14 @@ File: ./ebro-temperatur.eps Graphic file (type eps)
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[25] [26] [27] (./BA Kittel.aux)
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
- ) 
+[30] [31] [32] (./BA Kittel.aux) ) 
 Here is how much of TeX's memory you used:
- 8315 strings out of 495060
- 128436 string characters out of 3182054
- 176681 words of memory out of 3000000
- 11344 multiletter control sequences out of 15000+200000
+ 8344 strings out of 495060
+ 128958 string characters out of 3182054
+ 176935 words of memory out of 3000000
+ 11371 multiletter control sequences out of 15000+200000
  14196 words of font info for 54 fonts, out of 3000000 for 9000
  14 hyphenation exceptions out of 8191
- 36i,10n,34p,1480b,350s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 36i,10n,34p,1788b,348s stack positions out of 5000i,500n,10000p,200000b,50000s
 
-Output written on "BA Kittel.dvi" (27 pages, 94740 bytes).
+Output written on "BA Kittel.dvi" (32 pages, 109204 bytes).

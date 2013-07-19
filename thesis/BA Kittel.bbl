@@ -44,12 +44,6 @@ Chong, H. and Sunding, D. (2006).
 \newblock Water markets and trading.
 \newblock {\em Annual Review of Environment and Resources}, 31:239--264.
 
-\bibitem[Dalhuisen et~al., 2003]{Dalhuisen2003}
-Dalhuisen, J., Florax, R., de~Groot, H., and Nijkamp, P. (2003).
-\newblock Price and income elasticities of residential water demand: A
-  meta-analysis.
-\newblock {\em Land Economics}, 79(2):292--308.
-
 \bibitem[Galan et~al., 2009]{Galan2011}
 Galan, J., Lopez-Paredes, A., and del Olmo, R. (2009).
 \newblock An agent-based model for domestic water management in valladolid
@@ -69,10 +63,23 @@ Goetz, R., Martinez, Y., and Rodrigo, J. (2008).
   rules.
 \newblock {\em Ecological Economics}, 65(2):304--314.
 
+\bibitem[Grimm et~al., 2010]{Grimm2010}
+Grimm, V., Berger, U., DeAngelis, D., Polhill, G., Giske, J., and S.F., R.
+  (2010).
+\newblock {The ODD protocol: a review and first update}.
+\newblock {\em Ecological Modelling}, 221:2760--2768.
+
 \bibitem[Hardin, 1968]{Hardin1968}
 Hardin, G. (1968).
 \newblock The tragedy of the commons.
 \newblock {\em Science}, (162):1243--1248.
+
+\bibitem[Hawes and Reed, 2006]{Hawes2006}
+Hawes, C. and Reed, C. (2006).
+\newblock Theoretical steps towards modelling resilience in complex systems.
+\newblock {\em Lecture Notes in Computer Science (including subseries Lecture
+  Notes in Artificial Intelligence and Lecture Notes in Bioinformatics)}, 3980
+  LNCS:644--653.
 
 \bibitem[Heckbert et~al., 2010]{Heckbert2010}
 Heckbert, S., Baynes, T., and Reeson, A. (2010).
@@ -114,6 +121,12 @@ Penagos, G. (2007).
   preliminary assessment of environmental sustainability.
 \newblock Master's thesis, UNESCO-IHE Institute for Water Education, Delft.
 
+\bibitem[Rounsevell et~al., 2012]{Rounsevell2012}
+Rounsevell, M., Robinson, D., and Murray-Rust, D. (2012).
+\newblock From actors to agents in socio-ecological systems models.
+\newblock {\em Philosophical Transactions of the Royal Society B: Biological
+  Sciences}, 367(1586):259--269.
+
 \bibitem[Ruijs et~al., 2008]{Ruijs2008}
 Ruijs, A., Zimmermann, A., and van~den Berg, M. (2008).
 \newblock Demand and distributional effects of water pricing policies.
@@ -123,6 +136,14 @@ Ruijs, A., Zimmermann, A., and van~den Berg, M. (2008).
 Salvador, R., Martinez-Cob, A., Cavero, J., and Playan, E. (2011).
 \newblock Seasonal on-farm irrigation performance in the ebro basin (spain):
   crops and irrigation systems.
+
+\bibitem[Scott et~al., 2012]{Scott2012}
+Scott, C.~A., Bailey, C.~J., Marra, R.~P., Woods, G.~J., Ormerod, K.~J., and
+  Lansey, K. (2012).
+\newblock Scenario planning to address critical uncertainties for robust and
+  resilient water–wastewater infrastructures under conditions of water
+  scarcity and rapid development.
+\newblock {\em Water}, 4(4):848--868.
 
 \bibitem[Varela-Ortega et~al., 1998]{Varela-Ortega1998}
 Varela-Ortega, C., Sumpsi, J., Garrido, A., Blanco, M., and Iglesias, E.
