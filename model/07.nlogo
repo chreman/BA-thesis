@@ -1,15 +1,19 @@
+
 ;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
-; To implement:
-; different household agents (income groups, demand behaviour, decision making)
-; dynamic demand (demand curves)
-; add supply via rivers and calculate outtake to satisfy demand
-; aggregate behaviour (catchments vs. irrigations | rivers vs. urban demand)
-; adaptive decision making
+; This model simulates the behaviour of agricultural and urban water consumers
+; under stochastic environment. The aim is to evaluate certain policies
+; trying to improve the resilience to scarcity.
+; It is initialized with empirical data from the Ebro region in Spain.
+;
+; All code here is set to CC0-License.
 ;________________________________________________________________________________
+
+
 
 
 ;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
 ; Don't forget to load the necessary extensions!
+; They can be found here: https://github.com/NetLogo/NetLogo/wiki/Extensions
 ;________________________________________________________________________________
 
 extensions[gis]
@@ -67,12 +71,7 @@ globals[
   economic-value
   ]
 
-;turtles-own
-;[]
-
 patches-own[
-  rain?
-  water
   irrigation-demand?
   catchment-id
   irrigation-id
@@ -152,15 +151,13 @@ rivers-own[
 
 to setup
 ;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
-; Setup-procedure:
-; set-patch-size is important, it defines how many patches are going to be in the
-; model, and how fine the geographic resolution is going to be.
-; !!! Careful: Small values (under 5) increase computing time exponentially !!!
+; Setup-procedure.
+; ! Careful: Small values (under 5) increase computing time exponentially !
 ;________________________________________________________________________________
 
   clear-all
-  set-patch-size 4
-  set world-extent 360
+  set-patch-size 4 ; set-patch-size defines how many patches are going to be in the model, and how fine the geographic resolution is going to be.
+  set world-extent 360 ; sets the size of the graphic representation in patches * 2.
   initialize
   load-data
   draw-landscape
@@ -193,9 +190,6 @@ to load-data
 end
 
 
-
-
-
 to draw-landscape
 ;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
 ; Since the GIS-shapes are not 1:1 patches, there are some transformations
@@ -214,8 +208,6 @@ to draw-landscape
   gis:draw irrigation-centroids 2
   gis:set-drawing-color red
   gis:draw catchments-area 2
-  gis:set-drawing-color cyan
-; gis:draw canals 2
   gis:set-drawing-color yellow
   gis:draw cities 2
 end
@@ -227,6 +219,7 @@ to setup-agriculture
 ;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
 ; This function takes the feature list of irrigated areas from the GIS-data
 ; and creates one agent representing one irrigated area.
+; Crop types and technological level are initialized at random.
 ;________________________________________________________________________________
 
   foreach gis:feature-list-of irrigation-centroids[
@@ -265,11 +258,12 @@ end
 
 to setup-households
 ;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
-; This procedures creates a number of households. Initially, each household
-; is the same, but they can be modelled to reflect certain income groups or
-; different demand behaviour.
+; This procedures creates a number of households. 
 ; It gives each household agent the fractional value of the cities population,
 ; according to how many agents are created.
+; Household features such as size (Dx) or wealth (W) are distributed at random,
+; according to the empirical data of Barberan et al. (2007),
+; and Arbues et a. (2007).
 ;________________________________________________________________________________
 
   foreach gis:feature-list-of popcores[
@@ -335,7 +329,6 @@ to setup-water-utilities
 end
 
 
-
 to setup-catchments
   let catchments-list gis:feature-list-of catchments-area
   foreach catchments-list[
@@ -371,16 +364,24 @@ end
 
 to initialize
 ;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
-; This is used to initalize certain parameters of the model.
-; Especially rain-list is important, where the yearly rainfall pattern is put in.
+; This is used to initalize certain parameters of the model. Certain environmental
+; characteristics, such as yearly temperature changes and the Ebro water discharge
+; characteristics. Those data are 'hardcoded' into the model and have to be
+; changed manually, if desired so.
 ; It is modeled as days per month with rainfall and taken from national weather
 ; data.
 ;
-; Rain, precipitation and temperature are taken from:
+; Temperature data are taken from:
 ; http://worldweather.wmo.int/083/c01240.htm ( 19.05.2013 )
 ; Ebro discharge data is taken from:
 ; http://www.grdc.sr.unh.edu/html/Polygons/P6226800.html ( 19.05.2013)
-; and interpolated from m³/s to m³/week.
+; and extrapolated from m³/s to Hm³/week.
+;
+; Here the marginal conditions for household- and agricultural behaviour are
+; hardcoded as well: the price function households encounter, and the water demand
+; and marginal productivity of crops.
+;
+; Other data are set at certain value, to provide functions with initial values.
 ;________________________________________________________________________________
 
   set week 0
@@ -401,7 +402,6 @@ to initialize
   set crop-demand-list [288 353 115 216] ; water demand m³/hectar per week
   set crop-productivity-list [0.13 0.83 0.42 1.0] ; € / m³
 end
-
 
 
 
@@ -457,6 +457,10 @@ end
 
 
 to aggregate
+;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+; This function is used for easier BehaviourSpace logging, and aggregates various
+; agent variables.
+;________________________________________________________________________________
   set urban-demand-acc urban-demand-acc + sum [demand-agg] of households / 1000000; Hm³
   set agro-demand-acc agro-demand-acc + sum [demand] of irrigations / 1000000 ; Hm³
   set urban-demand (mean [demand-pc] of households * sum [population] of households) / 1000000; m³
@@ -468,6 +472,11 @@ end
 
 
 to supply
+;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+; This function models the supply of water in the Ebro basin. It works on a very
+; aggregated level, and calculates the total availiable water for each timestep.
+; It also calculates the water availiable in or for storing purposes.
+;________________________________________________________________________________
   set availiable-water ebro-discharge - minimum-flow * 3600 * 24 * 7 / 1000000; Hm³ / week <=> 350m³ / s
   if (availiable-water > 0) and (storage <= storage-limit)[
     let fill storage-limit - storage
@@ -584,6 +593,15 @@ to agriculture-demand-function
    ]]
 end
 
+
+;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+; In the next two functions, the learning behaviour of households is implemented.
+; They create a subset "peers" of comparable households with higher utility
+; and lower costs. They then calculate the average of the changeable
+; feature (in this model household-size and technological efficiency), and if
+; applicable, they mimic those features.
+;________________________________________________________________________________
+
 to hh-tech-improve
   if week mod 12 = 4 and year > 2[
   ask n-of 300 households[
@@ -615,6 +633,13 @@ to hh-learn
   ]
 end
 
+;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+; In this function, the strategic behaviour of agricultural agents is simulated.
+; For each availiable crop, they calculate an expected utility value, and then
+; chose the maximum value, which leads to a change in the grown crop.
+;________________________________________________________________________________
+
+
 to agro-learn
   if (week = 10)[ ask irrigations[
       ifelse (drought? = TRUE)[
@@ -638,11 +663,26 @@ to agro-learn
     ]]
 end
 
+;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+; This function simulates a steady improvement in the technology used for
+; irrigation, reflecting a move from surface or sprinkler irrigation to drop
+; irrigation.
+;________________________________________________________________________________
+
+
+
 to agro-tech-improve  if (week = 10)[
     ask n-of 36 irrigations[
       set irrigation-type 1
   ]]
 end
+
+
+;°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+; This is a simple reporter used for BehaviourSpace logging.
+; It reports 1 if the drought?-variable is TRUE, and 0 if it is FALSE.
+;________________________________________________________________________________
+
 
 to-report report-boolean [input]
   ifelse input = TRUE [report 1][report 0]
