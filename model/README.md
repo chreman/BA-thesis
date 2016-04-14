@@ -20,3 +20,5 @@ Núcleos de Población 1: 50.000
 
 
 For comments: c.kittel [ at ] edu.uni-graz.at
+
+The Netlogo Code is licensed under the [MIT License](https://opensource.org/licenses/MIT)
